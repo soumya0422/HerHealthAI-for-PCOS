@@ -1,0 +1,10 @@
+fastapi
+uvicorn[standard]
+pandas
+numpy
+scikit-learn
+joblib
+# optional (install if you want XGBoost and SHAP explanations)
+xgboost
+shap
+streamlit

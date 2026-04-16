@@ -1,3 +1,12 @@
+---
+title: HerHealthAI
+emoji: 🏥
+colorFrom: pink
+colorTo: purple
+sdk: docker
+app_port: 7860
+---
+
 # HerHealthAI
 
 PCOS Risk Backend

@@ -4,3 +4,7 @@ __pycache__/
 *.pyc
 .vscode/
 *.sqlite
+venv/
+_dev_backup/
+.pytest_cache/
+scratch/

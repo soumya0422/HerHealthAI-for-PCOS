@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HerHealthAI — PCOS Risk Assessment & Lifestyle Guide</title>
+  <meta name="description" content="AI-powered PCOS risk prediction with personalized diet, exercise and lifestyle recommendations. Track your health journey." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- ═══════════════════════ PARTICLE BACKGROUND ═══════════════════════ -->
+<canvas id="particleCanvas"></canvas>
+
+<!-- ═══════════════════════ NAVBAR ═══════════════════════ -->
+<nav class="navbar" id="navbar">
+  <div class="nav-inner">
+    <div class="nav-brand">
+      <div class="nav-logo">
+        <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="18" cy="18" r="18" fill="url(#logoGrad)"/>
+          <path d="M18 10 C14 10 11 13 11 17 C11 22 18 27 18 27 C18 27 25 22 25 17 C25 13 22 10 18 10Z" fill="white" opacity="0.9"/>
+          <defs>
+            <linearGradient id="logoGrad" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#a855f7"/>
+              <stop offset="1" stop-color="#ec4899"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+      <span class="nav-title">HerHealth<span class="brand-ai">AI</span></span>
+    </div>
+    <div class="nav-links" id="navLinks">
+      <a href="#" onclick="showPage('landing')" class="nav-link active" id="navHome">Home</a>
+      <a href="#" onclick="showPage('assess')" class="nav-link" id="navAssess">Assessment</a>
+      <a href="#" onclick="showPage('progress')" class="nav-link" id="navProgress">My Progress</a>
+      <a href="#" onclick="showPage('diary')" class="nav-link" id="navDiary">My Diary</a>
+    </div>
+    <div class="nav-auth" id="navAuth">
+      <button class="btn btn-outline" onclick="openModal('login')">Log In</button>
+      <button class="btn btn-primary" onclick="openModal('register')">Sign Up</button>
+    </div>
+    <div class="nav-user hidden" id="navUser">
+      <div class="user-avatar" id="userAvatar">S</div>
+      <span class="user-name" id="userName">User</span>
+      <button class="btn btn-sm btn-outline" onclick="logout()">Logout</button>
+    </div>
+  </div>
+</nav>
+
+<!-- ═══════════════════════ AUTH MODAL ═══════════════════════ -->
+<div class="modal-overlay hidden" id="authModal" onclick="closeModal()">
+  <div class="modal-card" onclick="event.stopPropagation()">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+
+    <!-- Login Tab -->
+    <div id="loginTab">
+      <h2 class="modal-title">Welcome Back 💜</h2>
+      <p class="modal-sub">Sign in to track your health journey</p>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input type="email" id="loginEmail" class="form-input" placeholder="your@email.com" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input type="password" id="loginPassword" class="form-input" placeholder="••••••••" />
+      </div>
+      <div id="loginError" class="auth-error hidden"></div>
+      <button class="btn btn-primary btn-full" onclick="doLogin()">Sign In</button>
+      <p class="modal-switch">Don't have an account? <a href="#" onclick="switchTab('register')">Sign Up</a></p>
+    </div>
+
+    <!-- Register Tab -->
+    <div id="registerTab" class="hidden">
+      <h2 class="modal-title">Create Account 🌸</h2>
+      <p class="modal-sub">Start your personalized health journey</p>
+      <div class="form-group">
+        <label class="form-label">Full Name</label>
+        <input type="text" id="regName" class="form-input" placeholder="Your name" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input type="email" id="regEmail" class="form-input" placeholder="your@email.com" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input type="password" id="regPassword" class="form-input" placeholder="Min. 6 characters" />
+      </div>
+      <div id="regError" class="auth-error hidden"></div>
+      <button class="btn btn-primary btn-full" onclick="doRegister()">Create Account</button>
+      <p class="modal-switch">Already have an account? <a href="#" onclick="switchTab('login')">Sign In</a></p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ PAGES ═══════════════════════ -->
+<main id="app">
+
+  <!-- ─────────── LANDING PAGE ─────────── -->
+  <section class="page active" id="landingPage">
+
+    <!-- Hero -->
+    <div class="hero">
+      <div class="hero-badge">🧬 AI-Powered Women's Health</div>
+      <h1 class="hero-title">Know Your <span class="gradient-text">PCOS Risk</span><br/>Take Control Today</h1>
+      <p class="hero-desc">HerHealthAI uses a clinically-trained ML model (91.74% accuracy) to assess your PCOS risk and generate a personalized diet, exercise, and lifestyle plan — just for you.</p>
+      <div class="hero-actions">
+        <button class="btn btn-primary btn-lg" onclick="startAssessment()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          Start Free Assessment
+        </button>
+        <button class="btn btn-outline btn-lg" onclick="scrollToHow()">How It Works</button>
+      </div>
+      <div class="hero-stats">
+        <div class="stat-item">
+          <span class="stat-num">91.74%</span>
+          <span class="stat-lbl">Model Accuracy</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <span class="stat-num">541+</span>
+          <span class="stat-lbl">Training Records</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <span class="stat-num">41</span>
+          <span class="stat-lbl">Health Features</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <span class="stat-num">AI</span>
+          <span class="stat-lbl">Gemini Powered</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- How It Works -->
+    <div class="section how-section" id="howSection">
+      <div class="section-label">SIMPLE PROCESS</div>
+      <h2 class="section-title">How <span class="gradient-text">HerHealthAI</span> Works</h2>
+      <div class="steps-grid">
+        <div class="step-card">
+          <div class="step-num">01</div>
+          <div class="step-icon">📋</div>
+          <h3>Enter Your Health Data</h3>
+          <p>Fill in a simple 4-step form with your vital signs, hormonal markers, and lifestyle info.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-num">02</div>
+          <div class="step-icon">🤖</div>
+          <h3>AI Analysis</h3>
+          <p>Our Random Forest model analyzes 41 health features to compute your PCOS risk percentage.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-num">03</div>
+          <div class="step-icon">🌿</div>
+          <h3>Personalized Plan</h3>
+          <p>Google Gemini AI generates your custom diet plan, exercise schedule, and lifestyle tips.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-num">04</div>
+          <div class="step-icon">📈</div>
+          <h3>Track Progress</h3>
+          <p>Return anytime to reassess. We track your score over time so you can see your improvement.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Model cards -->
+    <div class="section model-section">
+      <div class="section-label">ML PERFORMANCE</div>
+      <h2 class="section-title">Built on a <span class="gradient-text">Proven Model</span></h2>
+      <div class="metrics-grid" id="landingMetrics">
+        <div class="metric-card-lg">
+          <div class="metric-icon">🎯</div>
+          <div class="metric-val" id="lAccuracy">91.74%</div>
+          <div class="metric-lbl">Accuracy</div>
+        </div>
+        <div class="metric-card-lg">
+          <div class="metric-icon">🔬</div>
+          <div class="metric-val" id="lPrecision">90.91%</div>
+          <div class="metric-lbl">Precision</div>
+        </div>
+        <div class="metric-card-lg">
+          <div class="metric-icon">📡</div>
+          <div class="metric-val" id="lRecall">83.33%</div>
+          <div class="metric-lbl">Recall</div>
+        </div>
+        <div class="metric-card-lg">
+          <div class="metric-icon">⚖️</div>
+          <div class="metric-val" id="lF1">86.96%</div>
+          <div class="metric-lbl">F1 Score</div>
+        </div>
+        <div class="metric-card-lg">
+          <div class="metric-icon">📊</div>
+          <div class="metric-val" id="lAUC">94.10%</div>
+          <div class="metric-lbl">ROC-AUC</div>
+        </div>
+      </div>
+      <p class="model-note">📦 Random Forest Classifier · 541 patient records · 41 medical features · Stratified 80/20 split</p>
+    </div>
+
+  </section>
+
+  <!-- ─────────── ASSESSMENT PAGE ─────────── -->
+  <section class="page hidden" id="assessPage">
+    <div class="assess-header">
+      <h1 class="section-title">PCOS <span class="gradient-text">Risk Assessment</span></h1>
+      <p class="assess-sub">Complete all 4 steps for the most accurate prediction</p>
+    </div>
+
+    <!-- Step Progress -->
+    <div class="step-progress">
+      <div class="step-bar-wrap">
+        <div class="step-bar-fill" id="stepBarFill" style="width:25%"></div>
+      </div>
+      <div class="step-dots">
+        <div class="step-dot active" id="dot1" onclick="goToStep(1)"><span>1</span><label>Basic Info</label></div>
+        <div class="step-dot" id="dot2" onclick="goToStep(2)"><span>2</span><label>Vital Signs</label></div>
+        <div class="step-dot" id="dot3" onclick="goToStep(3)"><span>3</span><label>Hormones</label></div>
+        <div class="step-dot" id="dot4" onclick="goToStep(4)"><span>4</span><label>Symptoms</label></div>
+      </div>
+    </div>
+
+    <!-- STEP 1: Basic Info -->
+    <div class="form-step active" id="step1">
+      <div class="step-card-form glass">
+        <h2 class="step-title">👤 Basic Information</h2>
+        <p class="step-desc">Tell us about yourself to personalise your assessment.</p>
+        <div class="input-grid">
+          <div class="form-group">
+            <label class="form-label">Age <span class="req">*</span></label>
+            <div class="input-with-unit">
+              <input type="number" id="f_age" class="form-input" min="12" max="60" value="25" placeholder="25" />
+              <span class="unit">years</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Weight <span class="req">*</span></label>
+            <div class="input-with-unit">
+              <input type="number" id="f_weight" class="form-input" min="30" max="200" step="0.1" value="60" placeholder="60" oninput="calcBMI()" />
+              <span class="unit">kg</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Height <span class="req">*</span></label>
+            <div class="input-with-unit">
+              <input type="number" id="f_height" class="form-input" min="100" max="220" step="0.1" value="160" placeholder="160" oninput="calcBMI()" />
+              <span class="unit">cm</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">BMI <span class="auto-badge">Auto</span></label>
+            <div class="input-with-unit">
+              <input type="number" id="f_bmi" class="form-input bmi-field" readonly value="23.4" />
+              <span class="unit" id="bmiCat">Normal</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Waist</label>
+            <div class="input-with-unit">
+              <input type="number" id="f_waist" class="form-input" min="18" max="60" step="0.1" value="30" oninput="calcWHR()" />
+              <span class="unit">inch</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Hip</label>
+            <div class="input-with-unit">
+              <input type="number" id="f_hip" class="form-input" min="24" max="70" step="0.1" value="36" oninput="calcWHR()" />
+              <span class="unit">inch</span>
+            </div>
+          </div>
+          <div class="form-group span-full">
+            <label class="form-label">Marital Status</label>
+            <div class="input-with-unit">
+              <input type="number" id="f_marriage" class="form-input" min="0" max="30" value="0" />
+              <span class="unit">years (0 if unmarried)</span>
+            </div>
+          </div>
+        </div>
+        <div class="step-actions">
+          <div></div>
+          <button class="btn btn-primary" onclick="nextStep(1)">Next: Vital Signs →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 2: Vital Signs -->
+    <div class="form-step hidden" id="step2">
+      <div class="step-card-form glass">
+        <h2 class="step-title">💓 Vital Signs</h2>
+        <p class="step-desc">Your cardiovascular and blood markers help refine the prediction.</p>
+        <div class="input-grid">
+          <div class="form-group">
+            <label class="form-label">Pulse Rate</label>
+            <div class="input-with-unit">
+              <input type="number" id="f_pulse" class="form-input" min="40" max="200" value="72" />
+              <span class="unit">bpm</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Respiration Rate</label>
+            <div class="input-with-unit">
+              <input type="number" id="f_rr" class="form-input" min="8" max="40" value="16" />
+              <span class="unit">breaths/min</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Haemoglobin</label>
+            <div class="input-with-unit">
+              <input type="number" id="f_hb" class="form-input" min="5" max="20" step="0.1" value="12.0" />
+              <span class="unit">g/dl</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Random Blood Sugar</label>
+            <div class="input-with-unit">
+              <input type="number" id="f_rbs" class="form-input" min="50" max="400" value="90" />
+              <span class="unit">mg/dl</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">BP Systolic</label>
+            <div class="input-with-unit">
+              <input type="number" id="f_bps" class="form-input" min="70" max="200" value="120" />
+              <span class="unit">mmHg</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">BP Diastolic</label>
+            <div class="input-with-unit">
+              <input type="number" id="f_bpd" class="form-input" min="40" max="130" value="80" />
+              <span class="unit">mmHg</span>
+            </div>
+          </div>
+        </div>
+        <div class="step-actions">
+          <button class="btn btn-outline" onclick="prevStep(2)">← Back</button>
+          <button class="btn btn-primary" onclick="nextStep(2)">Next: Hormones →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 3: Hormonal Markers -->
+    <div class="form-step hidden" id="step3">
+      <div class="step-card-form glass">
+        <h2 class="step-title">🔬 Hormonal Markers</h2>
+        <p class="step-desc">These values come from your blood test reports. Enter 0 if unknown.</p>
+        <div class="input-grid">
+          <div class="form-group">
+            <label class="form-label">TSH</label>
+            <div class="input-with-unit">
+              <input type="number" id="f_tsh" class="form-input" min="0" max="100" step="0.01" value="2.5" />
+              <span class="unit">mIU/L</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">AMH</label>
+            <div class="input-with-unit">
+              <input type="number" id="f_amh" class="form-input" min="0" max="50" step="0.01" value="2.0" />
+              <span class="unit">ng/mL</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Prolactin (PRL)</label>
+            <div class="input-with-unit">
+              <input type="number" id="f_prl" class="form-input" min="0" max="300" step="0.1" value="10.0" />
+              <span class="unit">ng/mL</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Vitamin D3</label>
+            <div class="input-with-unit">
+              <input type="number" id="f_vitd" class="form-input" min="0" max="150" step="0.1" value="20.0" />
+              <span class="unit">ng/mL</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">FSH</label>
+            <div class="input-with-unit">
+              <input type="number" id="f_fsh" class="form-input" min="0" max="50" step="0.01" value="6.5" oninput="calcFSHLH()" />
+              <span class="unit">mIU/mL</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">LH</label>
+            <div class="input-with-unit">
+              <input type="number" id="f_lh" class="form-input" min="0" max="50" step="0.01" value="7.0" oninput="calcFSHLH()" />
+              <span class="unit">mIU/mL</span>
+            </div>
+          </div>
+          <div class="form-group span-full">
+            <label class="form-label">Menstrual Cycle</label>
+            <div class="radio-group">
+              <label class="radio-option" id="radioR">
+                <input type="radio" name="cycle" value="1" checked onchange="setCycle(1)" /> Regular
+              </label>
+              <label class="radio-option" id="radioI">
+                <input type="radio" name="cycle" value="0" onchange="setCycle(0)" /> Irregular
+              </label>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Cycle Length</label>
+            <div class="input-with-unit">
+              <input type="number" id="f_cycle" class="form-input" min="20" max="90" value="28" />
+              <span class="unit">days</span>
+            </div>
+          </div>
+        </div>
+        <div class="step-actions">
+          <button class="btn btn-outline" onclick="prevStep(3)">← Back</button>
+          <button class="btn btn-primary" onclick="nextStep(3)">Next: Symptoms →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 4: Symptoms & Lifestyle -->
+    <div class="form-step hidden" id="step4">
+      <div class="step-card-form glass">
+        <h2 class="step-title">🌿 Symptoms & Lifestyle</h2>
+        <p class="step-desc">Select all that apply to you in the last 3 months.</p>
+
+        <div class="symptom-section">
+          <h3 class="symptom-group-title">Physical Symptoms</h3>
+          <div class="symptom-grid">
+            <div class="symptom-toggle" id="tog_weight_gain" onclick="toggleSymptom('weight_gain')">
+              <span class="sym-icon">⚖️</span>
+              <span>Unexplained Weight Gain</span>
+            </div>
+            <div class="symptom-toggle" id="tog_hair_growth" onclick="toggleSymptom('hair_growth')">
+              <span class="sym-icon">💈</span>
+              <span>Excess Hair Growth</span>
+            </div>
+            <div class="symptom-toggle" id="tog_skin_darkening" onclick="toggleSymptom('skin_darkening')">
+              <span class="sym-icon">🎨</span>
+              <span>Skin Darkening</span>
+            </div>
+            <div class="symptom-toggle" id="tog_hair_loss" onclick="toggleSymptom('hair_loss')">
+              <span class="sym-icon">🪮</span>
+              <span>Hair Loss / Thinning</span>
+            </div>
+            <div class="symptom-toggle" id="tog_pimples" onclick="toggleSymptom('pimples')">
+              <span class="sym-icon">😔</span>
+              <span>Acne / Pimples</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="symptom-section">
+          <h3 class="symptom-group-title">Lifestyle Habits</h3>
+          <div class="symptom-grid">
+            <div class="symptom-toggle" id="tog_fast_food" onclick="toggleSymptom('fast_food')">
+              <span class="sym-icon">🍔</span>
+              <span>Regular Fast Food</span>
+            </div>
+            <div class="symptom-toggle good" id="tog_exercise" onclick="toggleSymptom('exercise')">
+              <span class="sym-icon">🏃</span>
+              <span>Regular Exercise</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="disclaimer-box">
+          <p>⚕️ <strong>Disclaimer:</strong> This tool provides a risk assessment only — not a medical diagnosis. Results should be shared with a qualified healthcare professional.</p>
+        </div>
+
+        <div class="step-actions">
+          <button class="btn btn-outline" onclick="prevStep(4)">← Back</button>
+          <button class="btn btn-primary btn-lg" onclick="runPrediction()">
+            <span id="predictBtnText">🔮 Get My PCOS Risk Score</span>
+            <div class="btn-spinner hidden" id="predictSpinner"></div>
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─────────── RESULTS PAGE ─────────── -->
+  <section class="page hidden" id="resultsPage">
+    <div class="results-header">
+      <button class="btn btn-outline btn-sm" onclick="showPage('assess')">← New Assessment</button>
+      <h1 class="section-title">Your <span class="gradient-text">Results</span></h1>
+      <button class="btn btn-outline btn-sm" onclick="showPage('progress')">My Progress →</button>
+    </div>
+
+    <!-- Risk Gauge + Level -->
+    <div class="results-top">
+      <div class="gauge-section glass">
+        <div class="gauge-wrap">
+          <svg class="gauge-svg" viewBox="0 0 200 120">
+            <path class="gauge-bg" d="M 20 110 A 80 80 0 0 1 180 110" />
+            <path class="gauge-fill" id="gaugeFill" d="M 20 110 A 80 80 0 0 1 180 110" stroke-dasharray="0 251" />
+            <text class="gauge-pct" id="gaugePct" x="100" y="100" text-anchor="middle">0%</text>
+            <text class="gauge-lbl" x="100" y="115" text-anchor="middle">PCOS Risk</text>
+          </svg>
+        </div>
+        <div class="risk-badge-wrap">
+          <div class="risk-badge" id="riskBadge">–</div>
+          <div class="risk-desc" id="riskDesc">Analyzing...</div>
+        </div>
+        <div class="result-meta">
+          <div class="meta-item">
+            <span class="meta-lbl">BMI</span>
+            <span class="meta-val" id="resBMI">–</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-lbl">Confidence</span>
+            <span class="meta-val" id="resConf">–</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-lbl">Previous Score</span>
+            <span class="meta-val" id="resPrev">–</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Feature Contributions Chart -->
+      <div class="chart-section glass">
+        <h3 class="chart-title">🔑 Key Risk Factors</h3>
+        <canvas id="featChart" width="400" height="280"></canvas>
+      </div>
+    </div>
+
+    <!-- Health Insights -->
+    <div class="insights-section glass" id="insightsSection">
+      <h3 class="section-subtitle">💡 Health Insights</h3>
+      <div class="insights-list" id="insightsList">
+        <div class="skeleton-line"></div>
+        <div class="skeleton-line short"></div>
+        <div class="skeleton-line"></div>
+      </div>
+    </div>
+
+    <!-- Diet + Exercise + Lifestyle Tabs -->
+    <div class="recs-section glass">
+      <div class="recs-tabs">
+        <button class="tab-btn active" id="tabDiet"      onclick="switchRecTab('diet')">🥗 Diet Plan</button>
+        <button class="tab-btn"        id="tabExercise"  onclick="switchRecTab('exercise')">🏋️ Exercise</button>
+        <button class="tab-btn"        id="tabLifestyle" onclick="switchRecTab('lifestyle')">🌙 Lifestyle</button>
+      </div>
+
+      <!-- Diet Tab -->
+      <div class="tab-content active" id="tabContentDiet">
+        <div class="diet-columns">
+          <div class="diet-col include">
+            <h4>✅ Include</h4>
+            <ul id="dietInclude"><li class="skeleton-line"></li><li class="skeleton-line short"></li></ul>
+          </div>
+          <div class="diet-col avoid">
+            <h4>❌ Avoid</h4>
+            <ul id="dietAvoid"><li class="skeleton-line"></li><li class="skeleton-line short"></li></ul>
+          </div>
+        </div>
+        <div class="meal-timing glass-inner" id="mealTiming">Loading meal timing advice...</div>
+      </div>
+
+      <!-- Exercise Tab -->
+      <div class="tab-content hidden" id="tabContentExercise">
+        <div class="schedule-grid" id="exerciseSchedule">
+          <div class="skeleton-card"></div><div class="skeleton-card"></div>
+          <div class="skeleton-card"></div><div class="skeleton-card"></div>
+        </div>
+        <div class="exercise-tip glass-inner" id="exerciseTip"></div>
+      </div>
+
+      <!-- Lifestyle Tab -->
+      <div class="tab-content hidden" id="tabContentLifestyle">
+        <div class="lifestyle-list" id="lifestyleList">
+          <div class="skeleton-line"></div><div class="skeleton-line short"></div>
+          <div class="skeleton-line"></div><div class="skeleton-line short"></div>
+        </div>
+        <div class="doctor-box" id="doctorBox"></div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ─────────── PROGRESS PAGE ─────────── -->
+  <section class="page hidden" id="progressPage">
+    <div class="assess-header">
+      <h1 class="section-title">My <span class="gradient-text">Progress</span></h1>
+      <p class="assess-sub">Track your PCOS risk journey over time</p>
+    </div>
+
+    <div class="progress-require-auth" id="progressAuth">
+      <div class="auth-prompt glass">
+        <div class="auth-prompt-icon">🔒</div>
+        <h3>Sign In to View Progress</h3>
+        <p>Create an account to save your assessments and track your health journey over time.</p>
+        <button class="btn btn-primary" onclick="openModal('login')">Sign In</button>
+        <button class="btn btn-outline" onclick="openModal('register')">Create Account</button>
+      </div>
+    </div>
+
+    <div class="progress-content hidden" id="progressContent">
+      <!-- Summary Cards -->
+      <div class="prog-cards">
+        <div class="prog-card glass">
+          <div class="prog-card-icon">📅</div>
+          <div class="prog-card-val" id="progTotal">–</div>
+          <div class="prog-card-lbl">Total Assessments</div>
+        </div>
+        <div class="prog-card glass">
+          <div class="prog-card-icon">🎯</div>
+          <div class="prog-card-val" id="progLatest">–</div>
+          <div class="prog-card-lbl">Latest Score</div>
+        </div>
+        <div class="prog-card glass">
+          <div class="prog-card-icon" id="progTrendIcon">📈</div>
+          <div class="prog-card-val" id="progImprovement">–</div>
+          <div class="prog-card-lbl">Improvement</div>
+        </div>
+        <div class="prog-card glass">
+          <div class="prog-card-icon">🏆</div>
+          <div class="prog-card-val" id="progFirst">–</div>
+          <div class="prog-card-lbl">Starting Score</div>
+        </div>
+      </div>
+
+      <!-- Score Over Time Chart -->
+      <div class="prog-chart-section glass">
+        <h3 class="chart-title">📊 Risk Score Over Time</h3>
+        <canvas id="progChart" width="800" height="250"></canvas>
+        <div id="progChartEmpty" class="chart-empty hidden">No history data yet. Complete an assessment first.</div>
+      </div>
+
+      <!-- History Table -->
+      <div class="history-section glass">
+        <h3 class="chart-title">📋 Assessment History</h3>
+        <div class="history-table-wrap">
+          <table class="history-table" id="historyTable">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Date</th>
+                <th>Risk Score</th>
+                <th>Risk Level</th>
+                <th>Change</th>
+              </tr>
+            </thead>
+            <tbody id="historyBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="prog-action">
+        <button class="btn btn-primary btn-lg" onclick="showPage('assess')">🔮 New Assessment</button>
+      </div>
+    </div>
+
+    <div class="progress-no-data hidden" id="progressNoData">
+      <div class="auth-prompt glass">
+        <div class="auth-prompt-icon">📭</div>
+        <h3>No Assessments Yet</h3>
+        <p>Complete your first PCOS risk assessment to start tracking your health journey.</p>
+        <button class="btn btn-primary" onclick="showPage('assess')">Start Assessment</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════ DIARY PAGE ═══════════════════════ -->
+  <section id="diaryPage" class="page hidden">
+    <div class="header-banner">
+      <h1 class="page-title">Menstrual Cycle Diary 📖</h1>
+      <p class="page-subtitle">Track your flow, symptoms, and mood. Powered by AI Insights.</p>
+    </div>
+
+    <div class="progress-auth hidden" id="diaryAuth">
+      <div class="auth-prompt glass">
+        <div class="auth-prompt-icon">🔒</div>
+        <h3>Login Required</h3>
+        <p>You must be signed in to securely track your personal cycle diary.</p>
+        <button class="btn btn-primary" onclick="openModal('login')">Log In</button>
+      </div>
+    </div>
+
+    <div class="diary-layout hidden" id="diaryContent">
+      <div class="diary-main">
+        <!-- New Entry Form -->
+        <div class="diary-card glass">
+          <h2 class="section-title">New Entry</h2>
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">Date</label>
+              <input type="date" id="d_date" class="form-input" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Period Status</label>
+              <select id="d_status" class="form-input">
+                <option value="Not started">Not started</option>
+                <option value="Day 1">Day 1 (Started)</option>
+                <option value="Ongoing">Ongoing</option>
+                <option value="Ended">Ended</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-top: 1rem;">
+            <label class="form-label">Flow Level</label>
+            <div class="radio-group" id="flowGroup" style="display: flex; gap: 1rem;">
+              <label><input type="radio" name="flow" value="Light"> Light</label>
+              <label><input type="radio" name="flow" value="Medium"> Medium</label>
+              <label><input type="radio" name="flow" value="Heavy"> Heavy</label>
+              <label><input type="radio" name="flow" value="None" checked> None</label>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-top: 1rem;">
+            <label class="form-label">Mood</label>
+            <select id="d_mood" class="form-input">
+              <option value="Neutral">Neutral 😐</option>
+              <option value="Happy">Happy 😊</option>
+              <option value="Irritated">Irritated 😠</option>
+              <option value="Low">Low 😔</option>
+            </select>
+          </div>
+
+          <div class="form-group" style="margin-top: 1rem;">
+            <label class="form-label">Symptoms (Select all that apply)</label>
+            <div class="symptom-toggles" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+              <button class="btn btn-sm btn-outline symptom-btn" onclick="toggleDiarySymptom('cramps', this)">Cramps</button>
+              <button class="btn btn-sm btn-outline symptom-btn" onclick="toggleDiarySymptom('headache', this)">Headache</button>
+              <button class="btn btn-sm btn-outline symptom-btn" onclick="toggleDiarySymptom('bloating', this)">Bloating</button>
+              <button class="btn btn-sm btn-outline symptom-btn" onclick="toggleDiarySymptom('fatigue', this)">Fatigue</button>
+              <button class="btn btn-sm btn-outline symptom-btn" onclick="toggleDiarySymptom('acne', this)">Acne</button>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-top: 1rem;">
+            <label class="form-label">Notes</label>
+            <textarea id="d_notes" class="form-input" rows="2" placeholder="Any additional notes..."></textarea>
+          </div>
+
+          <button class="btn btn-primary btn-full" style="margin-top: 1.5rem;" onclick="logDiaryEntry()">
+            <span id="diaryLogText">📥 Log Entry & Get Insights</span>
+            <div id="diarySpinner" class="spinner hidden"></div>
+          </button>
+        </div>
+      </div>
+
+      <!-- AI Insights -->
+      <div class="diary-sidebar">
+        <div class="diary-card glass" id="diaryInsightsBox" style="min-height: 400px; display: flex; flex-direction: column;">
+          <h2 class="section-title">🔮 AI Cycle Insights</h2>
+          <div id="diaryAiOutput" class="ai-chat" style="flex:1; display:flex; flex-direction:column; gap: 1rem; color: var(--text-muted); justify-content: center; align-items:center;">
+             <span>Log your first entry to generate personalized cycle tracking insights.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ═══════════════════════ TOAST ═══════════════════════ -->
+<div class="toast hidden" id="toast"></div>
+
+<script src="app.js"></script>
+</body>
+</html>

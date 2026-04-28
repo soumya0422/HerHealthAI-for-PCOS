@@ -14,9 +14,18 @@ def log_diary_entry(req: DiaryEntryRequest, db: Session = Depends(get_db), curre
     try:
         user_input = req.model_dump()
         
+        # Get active profile
+        profile_id = req.profile_id
+        if not profile_id:
+            from app.models.database import ProfileModel
+            profile = db.query(ProfileModel).filter(ProfileModel.user_id == current_user.user_id).first()
+            if not profile:
+                 raise HTTPException(status_code=404, detail="No profile found.")
+            profile_id = profile.profile_id
+
         # Pull history for Gemini context (max 30 days)
         history = (db.query(MenstrualRecord)
-                   .filter(MenstrualRecord.user_id == current_user.user_id)
+                   .filter(MenstrualRecord.profile_id == profile_id)
                    .order_by(MenstrualRecord.log_date.desc())
                    .limit(30)
                    .all())
@@ -33,7 +42,7 @@ def log_diary_entry(req: DiaryEntryRequest, db: Session = Depends(get_db), curre
         insights = get_cycle_diary_insights(hist_dicts, user_input)
 
         existing = db.query(MenstrualRecord).filter(
-            MenstrualRecord.user_id == current_user.user_id,
+            MenstrualRecord.profile_id == profile_id,
             MenstrualRecord.log_date == req.date
         ).first()
 
@@ -45,6 +54,7 @@ def log_diary_entry(req: DiaryEntryRequest, db: Session = Depends(get_db), curre
             existing.notes = req.notes
         else:
             record = MenstrualRecord(
+                profile_id=profile_id,
                 user_id=current_user.user_id,
                 log_date=req.date,
                 period_status=req.period_status,
@@ -63,12 +73,12 @@ def log_diary_entry(req: DiaryEntryRequest, db: Session = Depends(get_db), curre
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get('/history', tags=['Diary'])
-def get_diary_history(db: Session = Depends(get_db), current_user: UserModel = Depends(get_current_user)):
-    records = (db.query(MenstrualRecord)
-               .filter(MenstrualRecord.user_id == current_user.user_id)
-               .order_by(MenstrualRecord.log_date.desc())
-               .limit(100)
-               .all())
+def get_diary_history(profile_id: str = None, db: Session = Depends(get_db), current_user: UserModel = Depends(get_current_user)):
+    query = db.query(MenstrualRecord).filter(MenstrualRecord.user_id == current_user.user_id)
+    if profile_id:
+        query = query.filter(MenstrualRecord.profile_id == profile_id)
+    
+    records = query.order_by(MenstrualRecord.log_date.desc()).limit(100).all()
     
     return {
         'records': [

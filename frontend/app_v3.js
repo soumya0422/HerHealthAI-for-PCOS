@@ -2,7 +2,16 @@
    HerHealthAI — Application Logic
    ═══════════════════════════════ */
 
-const API_BASE = '';
+const API_BASE = window.location.origin;
+
+// ─── PROFILE COLOR PALETTE ───
+const PROFILE_COLORS = [
+  { bg: 'rgba(168,85,247,0.15)',  border: 'rgba(168,85,247,0.4)',  text: '#c084fc', grad: 'linear-gradient(135deg, #a855f7, #7c3aed)' },
+  { bg: 'rgba(236,72,153,0.15)',  border: 'rgba(236,72,153,0.4)',  text: '#f472b6', grad: 'linear-gradient(135deg, #ec4899, #db2777)' },
+  { bg: 'rgba(6,182,212,0.15)',   border: 'rgba(6,182,212,0.4)',   text: '#22d3ee', grad: 'linear-gradient(135deg, #06b6d4, #0891b2)' },
+  { bg: 'rgba(34,197,94,0.15)',   border: 'rgba(34,197,94,0.4)',   text: '#4ade80', grad: 'linear-gradient(135deg, #22c55e, #16a34a)' },
+  { bg: 'rgba(245,158,11,0.15)',  border: 'rgba(245,158,11,0.4)',  text: '#fbbf24', grad: 'linear-gradient(135deg, #f59e0b, #d97706)' },
+];
 
 // ─── STATE ───
 let state = {
@@ -13,14 +22,18 @@ let state = {
   diarySymptoms: [],
   cycleRegular: 1,
   lastResult: null,
+  activeProfile: null,
+  profiles: []
 };
 
 // ─── ON LOAD ───
 window.addEventListener('DOMContentLoaded', () => {
   initParticles();
   updateNavUI();
+  updateProfileContext();
   loadModelMetrics();
   calcBMI();
+  if (state.token) fetchProfiles();
 });
 
 // ════════════════════════════════
@@ -90,6 +103,7 @@ function showPage(name) {
 
   if (name === 'progress') loadProgress();
   if (name === 'diary') initDiaryPage();
+  updateProfileContext();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -157,12 +171,14 @@ function saveAuth(token, user) {
   localStorage.setItem('hhToken', token);
   localStorage.setItem('hhUser', JSON.stringify(user));
   updateNavUI();
+  fetchProfiles();
 }
 
 function logout() {
   state.token = null; state.user = null;
+  state.activeProfile = null; state.profiles = [];
   localStorage.removeItem('hhToken'); localStorage.removeItem('hhUser');
-  updateNavUI(); showPage('landing'); toast('Logged out. See you soon! 👋');
+  updateNavUI(); updateProfileContext(); showPage('landing'); toast('Logged out. See you soon! 👋');
 }
 
 function updateNavUI() {
@@ -170,11 +186,266 @@ function updateNavUI() {
   const user = document.getElementById('navUser');
   if (state.token && state.user) {
     auth.classList.add('hidden'); user.classList.remove('hidden');
-    document.getElementById('userName').textContent = state.user.name.split(' ')[0];
-    document.getElementById('userAvatar').textContent = state.user.name.charAt(0).toUpperCase();
+    const initial = getProfileInitials(state.activeProfile?.name || state.user.name);
+    const color = getProfileColor(state.activeProfile);
+    const avatar = document.getElementById('userAvatar');
+    avatar.textContent = initial;
+    avatar.style.background = color.grad;
   } else {
     auth.classList.remove('hidden'); user.classList.add('hidden');
   }
+}
+
+// ════════════════════════════════
+//  PROFILE MANAGEMENT
+// ════════════════════════════════
+
+function getProfileInitials(name) {
+  if (!name) return '?';
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+  return name.charAt(0).toUpperCase();
+}
+
+function getProfileColor(profile) {
+  if (!profile) return PROFILE_COLORS[0];
+  const idx = state.profiles.findIndex(p => p.profile_id === profile.profile_id);
+  return PROFILE_COLORS[idx >= 0 ? idx % PROFILE_COLORS.length : 0];
+}
+
+function getProfileAge(profile) {
+  if (!profile?.dob) return null;
+  const dob = new Date(profile.dob);
+  const diff = Date.now() - dob.getTime();
+  return Math.abs(new Date(diff).getUTCFullYear() - 1970);
+}
+
+async function fetchProfiles() {
+  if (!state.token) return;
+  try {
+    const res = await fetch(`${API_BASE}/profiles/`, {
+      headers: { 'Authorization': `Bearer ${state.token}` }
+    });
+    if (res.status === 401) {
+      logout();
+      toast('⚠️ Session expired. Please log in again.');
+      return;
+    }
+    const profiles = await res.json();
+    state.profiles = profiles;
+    
+    if (profiles.length > 0 && !state.activeProfile) {
+      state.activeProfile = profiles[0];
+    }
+    renderProfileSelect();
+    updateNavUI();
+    updateProfileContext();
+  } catch (e) { console.error('Error fetching profiles', e); }
+}
+
+function renderProfileSelect() {
+  const sel = document.getElementById('profileSelect');
+  if (!sel) return;
+  sel.innerHTML = state.profiles.map((p, i) => {
+    const color = PROFILE_COLORS[i % PROFILE_COLORS.length];
+    const age = getProfileAge(p);
+    const label = age ? `${p.name} (${age}y)` : p.name;
+    return `<option value="${p.profile_id}" ${state.activeProfile?.profile_id === p.profile_id ? 'selected' : ''}>${label}</option>`;
+  }).join('');
+}
+
+function switchProfile(id) {
+  const profile = state.profiles.find(p => p.profile_id === id);
+  if (profile && profile.profile_id !== state.activeProfile?.profile_id) {
+    state.activeProfile = profile;
+    const color = getProfileColor(profile);
+
+    // Update avatar
+    updateNavUI();
+    updateProfileContext();
+
+    // Show profile switch confirmation banner
+    showProfileSwitchBanner(profile);
+
+    // Refresh active page data
+    if (document.getElementById('progressPage')?.classList.contains('active')) loadProgress();
+    if (document.getElementById('diaryPage')?.classList.contains('active')) { loadDiaryHistory(); }
+    if (document.getElementById('resultsPage')?.classList.contains('active')) {
+      // Clear stale results when switching profile
+      document.getElementById('riskDesc').textContent = 'Switch detected — run a new assessment for this profile.';
+    }
+  }
+}
+
+function showProfileSwitchBanner(profile) {
+  const color = getProfileColor(profile);
+  const existing = document.getElementById('profileSwitchToast');
+  if (existing) existing.remove();
+
+  const el = document.createElement('div');
+  el.id = 'profileSwitchToast';
+  el.className = 'profile-switch-toast';
+  el.innerHTML = `
+    <div class="pst-avatar" style="background:${color.grad}">${getProfileInitials(profile.name)}</div>
+    <div class="pst-text">
+      <span class="pst-label">Switched to</span>
+      <span class="pst-name">${profile.name}</span>
+    </div>
+    <span class="pst-check">✓</span>
+  `;
+  document.body.appendChild(el);
+  requestAnimationFrame(() => el.classList.add('visible'));
+  setTimeout(() => {
+    el.classList.remove('visible');
+    setTimeout(() => el.remove(), 400);
+  }, 2500);
+}
+
+// ════════════════════════════════
+//  PROFILE CONTEXT BANNERS
+// ════════════════════════════════
+function updateProfileContext() {
+  const isLoggedIn = !!(state.token && state.user);
+  const profile = state.activeProfile;
+  const name = profile?.name || state.user?.name || 'Guest';
+  const color = getProfileColor(profile);
+  const initial = getProfileInitials(name);
+  const age = getProfileAge(profile);
+  const multiProfile = state.profiles.length > 1;
+
+  // ─── Landing page greeting ───
+  const landingCtx = document.getElementById('landingProfileCtx');
+  if (landingCtx) {
+    if (isLoggedIn) {
+      landingCtx.classList.remove('hidden');
+      const greeting = getTimeGreeting();
+      landingCtx.innerHTML = `
+        <div class="profile-ctx-avatar" style="background:${color.grad}">${initial}</div>
+        <div class="profile-ctx-text">
+          <span class="profile-ctx-greeting">${greeting}, <strong>${name}</strong> 👋</span>
+          <span class="profile-ctx-sub">${multiProfile ? 'Viewing your personal dashboard' : 'Your personalized health dashboard'}</span>
+        </div>
+        ${multiProfile ? '<div class="profile-ctx-badge">Active Profile</div>' : ''}
+      `;
+    } else {
+      landingCtx.classList.add('hidden');
+    }
+  }
+
+  // ─── Assessment page ───
+  const assessCtx = document.getElementById('assessProfileCtx');
+  if (assessCtx) {
+    if (isLoggedIn && profile) {
+      assessCtx.classList.remove('hidden');
+      const ageText = age ? ` · Age ${age}` : '';
+      assessCtx.innerHTML = `
+        <div class="profile-ctx-avatar sm" style="background:${color.grad}">${initial}</div>
+        <span class="profile-ctx-inline">Assessing for <strong>${name}</strong>${ageText}</span>
+        ${multiProfile ? `<button class="profile-ctx-switch" onclick="document.getElementById('profileSelect').focus()">Switch</button>` : ''}
+      `;
+    } else {
+      assessCtx.classList.add('hidden');
+    }
+  }
+
+  // ─── Progress page ───
+  const progressCtx = document.getElementById('progressProfileCtx');
+  if (progressCtx) {
+    if (isLoggedIn && profile) {
+      progressCtx.classList.remove('hidden');
+      progressCtx.innerHTML = `
+        <div class="profile-ctx-avatar sm" style="background:${color.grad}">${initial}</div>
+        <span class="profile-ctx-inline">Hi, <strong>${name}</strong>. This is your progress.</span>
+        ${multiProfile ? `<button class="profile-ctx-switch" onclick="document.getElementById('profileSelect').focus()">Switch Profile</button>` : ''}
+      `;
+    } else {
+      progressCtx.classList.add('hidden');
+    }
+  }
+
+  // ─── Results page ───
+  const resultsCtx = document.getElementById('resultsProfileCtx');
+  if (resultsCtx) {
+    if (isLoggedIn && profile) {
+      resultsCtx.classList.remove('hidden');
+      resultsCtx.innerHTML = `
+        <div class="profile-ctx-avatar sm" style="background:${color.grad}">${initial}</div>
+        <span class="profile-ctx-inline">Results for <strong>${name}</strong></span>
+      `;
+    } else {
+      resultsCtx.classList.add('hidden');
+    }
+  }
+
+  // ─── Diary page ───
+  const diaryCtx = document.getElementById('diaryProfileCtx');
+  if (diaryCtx) {
+    if (isLoggedIn && profile) {
+      diaryCtx.classList.remove('hidden');
+      diaryCtx.innerHTML = `
+        <div class="profile-ctx-avatar sm" style="background:${color.grad}">${initial}</div>
+        <span class="profile-ctx-inline"><strong>${name}'s</strong> Cycle Diary</span>
+        ${multiProfile ? `<button class="profile-ctx-switch" onclick="document.getElementById('profileSelect').focus()">Switch Profile</button>` : ''}
+      `;
+    } else {
+      diaryCtx.classList.add('hidden');
+    }
+  }
+
+  // ─── No-data states ───
+  const noDataMsg = document.querySelector('#progressNoData h3');
+  if (noDataMsg && isLoggedIn) {
+    noDataMsg.textContent = `No Assessments Yet for ${name}`;
+  }
+  const noDataDesc = document.querySelector('#progressNoData p');
+  if (noDataDesc && isLoggedIn) {
+    noDataDesc.textContent = `Complete ${name}'s first PCOS risk assessment to start tracking their health journey.`;
+  }
+}
+
+function getTimeGreeting() {
+  const h = new Date().getHours();
+  if (h < 12) return 'Good morning';
+  if (h < 17) return 'Good afternoon';
+  return 'Good evening';
+}
+
+function openProfileModal() { document.getElementById('profileModal').classList.remove('hidden'); }
+function closeProfileModal() { document.getElementById('profileModal').classList.add('hidden'); }
+
+async function doCreateProfile() {
+  const name = document.getElementById('newProfileName').value.trim();
+  const dob  = document.getElementById('newProfileDob').value;
+  const err  = document.getElementById('profileError');
+  err.classList.add('hidden');
+
+  if (!name || !dob) { showErr(err, 'Please enter name and date of birth.'); return; }
+
+  // Check for duplicate names
+  const duplicate = state.profiles.find(p => p.name.toLowerCase() === name.toLowerCase());
+  if (duplicate) {
+    showErr(err, `A profile named "${name}" already exists. Please use a different name.`);
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/profiles/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${state.token}` },
+      body: JSON.stringify({ name, dob })
+    });
+    const data = await res.json();
+    if (!res.ok) { showErr(err, data.detail || 'Failed to create profile'); return; }
+    
+    state.profiles.push(data);
+    state.activeProfile = data;
+    renderProfileSelect();
+    updateNavUI();
+    updateProfileContext();
+    closeProfileModal();
+    showProfileSwitchBanner(data);
+    toast(`Created profile for ${data.name}! 🌸`);
+  } catch (e) { showErr(err, 'Connection error.'); }
 }
 
 function showErr(el, msg) { el.textContent = msg; el.classList.remove('hidden'); }
@@ -239,22 +510,49 @@ function updateStepUI(n) {
   document.getElementById('stepBarFill').style.width = `${(n / 4) * 100}%`;
 }
 
+function calculateAge(dobStr) {
+  if (!dobStr) return null;
+  const dob = new Date(dobStr);
+  const diffMs = Date.now() - dob.getTime();
+  const ageDt = new Date(diffMs);
+  return Math.abs(ageDt.getUTCFullYear() - 1970);
+}
+
+function handleDobChange() {
+  const dob = document.getElementById('f_dob').value;
+  const age = calculateAge(dob);
+  document.getElementById('ageDisplay').textContent = age !== null ? `Age: ${age}` : 'Age: --';
+}
+
 function validateStep(n) {
   if (n === 1) {
-    const age = parseFloat(document.getElementById('f_age').value);
+    const dob = document.getElementById('f_dob').value;
     const w   = parseFloat(document.getElementById('f_weight').value);
     const h   = parseFloat(document.getElementById('f_height').value);
-    if (!age || age < 10 || age > 70) { toast('⚠️ Please enter a valid age (10–70).'); return false; }
+    
+    if (!dob) { toast('⚠️ Please enter your date of birth.'); return false; }
+    const age = calculateAge(dob);
+    if (age < 12 || age > 60) { toast('⚠️ PCOS Risk Assessment is optimized for ages 12–60.'); return false; }
     if (!w || w < 20 || w > 250) { toast('⚠️ Please enter a valid weight (20–250 kg).'); return false; }
     if (!h || h < 100 || h > 220) { toast('⚠️ Please enter a valid height (100–220 cm).'); return false; }
+
+    // Identify mismatch check: Catch early!
+    if (state.token && state.activeProfile && state.activeProfile.dob) {
+      if (dob !== state.activeProfile.dob) {
+        handleIdentityMismatch();
+        return false;
+      }
+    }
   }
   return true;
 }
 
 function collectPayload() {
   const v = (id) => parseFloat(document.getElementById(id)?.value) || null;
+  const vs = (id) => document.getElementById(id)?.value || null;
   return {
-    age:            v('f_age'),
+    profile_id:     state.activeProfile?.profile_id,
+    dob:            vs('f_dob'),
     weight:         v('f_weight'),
     height:         v('f_height'),
     bmi:            v('f_bmi'),
@@ -305,10 +603,28 @@ async function runPrediction() {
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${state.token}` },
         body: JSON.stringify(payload)
       });
-      if (!res.ok) { const e = await res.json(); throw new Error(e.detail || 'Prediction failed'); }
-      result = await res.json();
-    } else {
-      // Anonymous: predict only, then get recommendations separately
+      
+      // Handle expired/invalid token — auto-logout and fall through to anonymous prediction
+      if (res.status === 401) {
+        logout();
+        toast('⚠️ Session expired. Running assessment as guest — please log in again to save results.');
+        // Fall through to anonymous prediction below
+      } else {
+        const data = await res.json();
+        
+        if (res.status === 409) {
+            handleIdentityMismatch(payload);
+            return;
+        }
+        
+        if (!res.ok) { throw new Error(data.detail || 'Prediction failed'); }
+        result = data;
+      }
+    }
+
+    // Anonymous prediction (also used as fallback when token expired)
+    if (!result) {
+      payload.save_record = false;
       const [predRes, recRes] = await Promise.all([
         fetch(`${API_BASE}/predict`, {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -345,6 +661,14 @@ function showResults(data) {
   const recs      = data.recommendations || {};
   const confidence = data.confidence || 0;
   const prevScore = data.previous_score;
+
+  // Reset Feedback UI
+  const feedbackArea = document.getElementById('feedbackFormArea');
+  const feedbackSuccess = document.getElementById('feedbackSuccess');
+  const diagnosisSelect = document.getElementById('clinicalDiagnosis');
+  if (feedbackArea) feedbackArea.style.display = 'block';
+  if (feedbackSuccess) feedbackSuccess.classList.add('hidden');
+  if (diagnosisSelect) diagnosisSelect.value = '';
 
   // ─ Gauge
   animateGauge(riskPct);
@@ -446,51 +770,96 @@ function animateGauge(pct) {
   }, 16);
 }
 
-// Feature contribution bar chart (Canvas)
+// Feature contribution bar chart (Canvas) — with risk direction color coding
 function drawFeatureChart(features) {
   const canvas = document.getElementById('featChart');
   const ctx    = canvas.getContext('2d');
-  const W = canvas.width, H = canvas.height;
+  const dpr    = window.devicePixelRatio || 1;
+
+  // Ensure crisp rendering on HiDPI
+  const cssW = canvas.parentElement?.clientWidth || 560;
+  const cssH = Math.max(300, features.length * 38 + 50);
+  canvas.width  = cssW * dpr;
+  canvas.height = cssH * dpr;
+  canvas.style.width  = cssW + 'px';
+  canvas.style.height = cssH + 'px';
+  ctx.scale(dpr, dpr);
+
+  const W = cssW, H = cssH;
   ctx.clearRect(0, 0, W, H);
 
   const maxImportance = Math.max(...features.map(f => f.importance));
-  const barH     = 26;
-  const gap       = 8;
-  const labelW    = 180;
-  const barAreaW  = W - labelW - 60;
-  const startY    = 20;
+  const barH     = 24;
+  const gap       = 12;
+  const labelW    = 170;
+  const barAreaW  = W - labelW - 80;
+  const startY    = 28;
+
+  // Title
+  ctx.fillStyle = '#e2e8f0';
+  ctx.font = 'bold 13px Inter, sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('Key Factors Contributing to Your Result', 10, 16);
 
   features.forEach((feat, i) => {
     const y = startY + i * (barH + gap);
     const barW = (feat.importance / maxImportance) * barAreaW;
+    const isRisk = feat.direction === 'increases_risk';
 
     // Background bar
     ctx.fillStyle = 'rgba(255,255,255,0.04)';
     roundRect(ctx, labelW + 10, y, barAreaW, barH, 6);
     ctx.fill();
 
-    // Filled bar with gradient
+    // Filled bar — red/pink for risk-increasing, green/teal for risk-decreasing
     const grad = ctx.createLinearGradient(labelW + 10, 0, labelW + 10 + barW, 0);
-    grad.addColorStop(0, '#a855f7');
-    grad.addColorStop(1, '#ec4899');
+    if (isRisk) {
+      grad.addColorStop(0, '#f97316');
+      grad.addColorStop(1, '#ef4444');
+    } else {
+      grad.addColorStop(0, '#14b8a6');
+      grad.addColorStop(1, '#22c55e');
+    }
     ctx.fillStyle = grad;
     roundRect(ctx, labelW + 10, y, Math.max(barW, 4), barH, 6);
     ctx.fill();
 
-    // Label
-    const shortName = feat.feature.replace(/\(.+\)/, '').replace('(Y/N)', '').trim().substring(0, 22);
-    ctx.fillStyle = '#94a3b8';
+    // Direction arrow
+    const arrow = isRisk ? '▲' : '▼';
+    ctx.fillStyle = isRisk ? '#fca5a5' : '#86efac';
+    ctx.font = '10px Inter, sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText(arrow, labelW + 6, y + barH / 2 + 4);
+
+    // Label — use human-readable label if available, else clean up feature name
+    const displayName = (feat.label || feat.feature.replace(/\(.+\)/, '').replace('(Y/N)', '').trim()).substring(0, 22);
+    ctx.fillStyle = '#cbd5e1';
     ctx.font = '11px Inter, sans-serif';
     ctx.textAlign = 'right';
-    ctx.fillText(shortName, labelW, y + barH / 2 + 4);
+    ctx.fillText(displayName, labelW - 2, y + barH / 2 + 4);
 
-    // Percentage
+    // Percentage + direction label
     const pctText = `${(feat.importance * 100).toFixed(1)}%`;
-    ctx.fillStyle = '#c4b5fd';
+    ctx.fillStyle = isRisk ? '#fca5a5' : '#86efac';
     ctx.font = 'bold 11px Inter, sans-serif';
     ctx.textAlign = 'left';
-    ctx.fillText(pctText, labelW + 10 + barW + 6, y + barH / 2 + 4);
+    ctx.fillText(pctText, labelW + 10 + barW + 8, y + barH / 2 + 4);
   });
+
+  // Legend
+  const legendY = startY + features.length * (barH + gap) + 6;
+  ctx.font = '10px Inter, sans-serif';
+  // Risk increasing
+  ctx.fillStyle = '#ef4444';
+  roundRect(ctx, labelW + 10, legendY, 10, 10, 2); ctx.fill();
+  ctx.fillStyle = '#94a3b8';
+  ctx.textAlign = 'left';
+  ctx.fillText('Increases Risk', labelW + 26, legendY + 9);
+  // Risk decreasing
+  ctx.fillStyle = '#22c55e';
+  roundRect(ctx, labelW + 130, legendY, 10, 10, 2); ctx.fill();
+  ctx.fillStyle = '#94a3b8';
+  ctx.fillText('Decreases Risk', labelW + 146, legendY + 9);
 }
 
 function roundRect(ctx, x, y, w, h, r) {
@@ -505,6 +874,43 @@ function roundRect(ctx, x, y, w, h, r) {
   ctx.lineTo(x, y + r);
   ctx.quadraticCurveTo(x, y, x + r, y);
   ctx.closePath();
+}
+
+async function submitClinicalFeedback() {
+  const diagnosisSelect = document.getElementById('clinicalDiagnosis');
+  if (!diagnosisSelect) return;
+  const diagnosis = diagnosisSelect.value;
+  
+  if (!diagnosis) {
+    toast('⚠️ Please select a valid diagnosis first.');
+    return;
+  }
+  
+  if (!state.lastResult || !state.lastResult.request_id) {
+    toast('⚠️ Unlinkable result. Please run a new assessment first.');
+    return;
+  }
+
+  const payload = {
+    request_id: state.lastResult.request_id,
+    diagnosis: diagnosis
+  };
+
+  try {
+    const res = await fetch(`${API_BASE}/feedback`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    
+    if (!res.ok) throw new Error('Failed to submit feedback');
+    
+    document.getElementById('feedbackFormArea').style.display = 'none';
+    document.getElementById('feedbackSuccess').classList.remove('hidden');
+    toast('🎉 Feedback submitted to continuous learning AI!');
+  } catch(e) {
+    toast('❌ Error saving feedback');
+  }
 }
 
 // ════════════════════════════════
@@ -531,9 +937,12 @@ async function loadProgress() {
   document.getElementById('progressAuth').classList.add('hidden');
 
   try {
+    const profile_id = state.activeProfile?.profile_id;
+    const query = profile_id ? `?profile_id=${profile_id}` : '';
+    
     const [progRes, histRes] = await Promise.all([
-      fetch(`${API_BASE}/progress`, { headers: { 'Authorization': `Bearer ${state.token}` } }),
-      fetch(`${API_BASE}/history`,  { headers: { 'Authorization': `Bearer ${state.token}` } })
+      fetch(`${API_BASE}/progress${query}`, { headers: { 'Authorization': `Bearer ${state.token}` } }),
+      fetch(`${API_BASE}/history${query}`,  { headers: { 'Authorization': `Bearer ${state.token}` } })
     ]);
     const prog = await progRes.json();
     const hist = histRes.ok ? await histRes.json() : { records: [] };
@@ -710,6 +1119,19 @@ function initDiaryPage() {
   document.getElementById('diaryAuth').classList.add('hidden');
   document.getElementById('diaryContent').classList.remove('hidden');
   document.getElementById('d_date').valueAsDate = new Date();
+  loadDiaryHistory();
+}
+
+async function loadDiaryHistory() {
+  if (!state.token) return;
+  const profile_id = state.activeProfile?.profile_id;
+  const query = profile_id ? `?profile_id=${profile_id}` : '';
+  try {
+     const res = await fetch(`${API_BASE}/diary/history${query}`, {
+       headers: { 'Authorization': `Bearer ${state.token}` }
+     });
+     // Render list if needed (optional for now)
+  } catch (e) {}
 }
 
 function toggleDiarySymptom(symp, btn) {
@@ -736,6 +1158,7 @@ async function logDiaryEntry() {
   if (!d_date) { toast('⚠️ Please select a date.'); return; }
 
   const payload = {
+    profile_id: state.activeProfile?.profile_id,
     date: d_date,
     period_status: d_status,
     flow_level: d_flow,
@@ -777,4 +1200,53 @@ function renderDiaryInsights(data) {
     <div class="insight-item" style="color:#c4b5fd;"><strong>🔮 Next Period:</strong> ${data.next_period_prediction || ''}</div>
     <div class="insight-item" style="color:#f59e0b;"><strong>💡 Tips:</strong> ${data.tips || ''}</div>
   `;
+}
+// ════════════════════════════════
+//  IDENTITY MISMATCH HANDLERS
+// ════════════════════════════════
+function handleIdentityMismatch(payload) {
+    document.getElementById('mismatchModal').classList.remove('hidden');
+    document.getElementById('newNameGroup').classList.add('hidden');
+    document.getElementById('mismatchNewBtn').classList.remove('hidden');
+}
+
+function closeMismatchModal() {
+    document.getElementById('mismatchModal').classList.add('hidden');
+}
+
+function showNewNameInput() {
+    document.getElementById('newNameGroup').classList.remove('hidden');
+    document.getElementById('mismatchNewBtn').classList.add('hidden');
+    
+    if (document.getElementById('confirmNewProfileBtn')) return;
+
+    // Create actual profile after name input
+    const btn = document.createElement('button');
+    btn.id = 'confirmNewProfileBtn';
+    btn.className = 'btn btn-primary btn-full';
+    btn.textContent = 'Confirm & Create New Profile';
+    btn.onclick = async () => {
+        const name = document.getElementById('mismatchNewName').value.trim();
+        if (!name) { toast('⚠️ Please enter a name for the new profile.'); return; }
+        
+        // Create profile
+        const dob = document.getElementById('f_dob').value;
+        try {
+            const res = await fetch(`${API_BASE}/profiles/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${state.token}` },
+                body: JSON.stringify({ name, dob })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.detail);
+            
+            state.profiles.push(data);
+            state.activeProfile = data;
+            renderProfileSelect();
+            closeMismatchModal();
+            toast(`Profile created for ${name}! Re-running assessment...`);
+            runPrediction(); // Retry
+        } catch (e) { toast(`❌ ${e.message}`); }
+    };
+    document.querySelector('.mismatch-actions').appendChild(btn);
 }

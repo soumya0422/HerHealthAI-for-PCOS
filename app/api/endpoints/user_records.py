@@ -29,12 +29,12 @@ def recommend(request: Request, req: PredictRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get('/history', tags=['Progress'])
-def history(db: Session = Depends(get_db), current_user: UserModel = Depends(get_current_user)):
-    records = (db.query(HealthRecord)
-               .filter(HealthRecord.user_id == current_user.user_id)
-               .order_by(HealthRecord.prediction_date.desc())
-               .limit(20)
-               .all())
+def history(profile_id: str = None, db: Session = Depends(get_db), current_user: UserModel = Depends(get_current_user)):
+    query = db.query(HealthRecord).filter(HealthRecord.user_id == current_user.user_id)
+    if profile_id:
+        query = query.filter(HealthRecord.profile_id == profile_id)
+    
+    records = query.order_by(HealthRecord.prediction_date.desc()).limit(20).all()
     return {
         'records': [
             {
@@ -49,11 +49,12 @@ def history(db: Session = Depends(get_db), current_user: UserModel = Depends(get
     }
 
 @router.get('/progress', tags=['Progress'])
-def progress(db: Session = Depends(get_db), current_user: UserModel = Depends(get_current_user)):
-    records = (db.query(HealthRecord)
-               .filter(HealthRecord.user_id == current_user.user_id)
-               .order_by(HealthRecord.prediction_date.asc())
-               .all())
+def progress(profile_id: str = None, db: Session = Depends(get_db), current_user: UserModel = Depends(get_current_user)):
+    query = db.query(HealthRecord).filter(HealthRecord.user_id == current_user.user_id)
+    if profile_id:
+        query = query.filter(HealthRecord.profile_id == profile_id)
+    
+    records = query.order_by(HealthRecord.prediction_date.asc()).all()
 
     if not records:
         return {'has_data': False, 'message': 'No predictions yet.'}
@@ -64,11 +65,11 @@ def progress(db: Session = Depends(get_db), current_user: UserModel = Depends(ge
     improvement = round(first.risk_score - latest.risk_score, 2)
     pct_change  = round((improvement / first.risk_score) * 100, 2) if first.risk_score > 0 else 0
 
-    progress_recs = (db.query(ProgressRecord)
-                     .filter(ProgressRecord.user_id == current_user.user_id)
-                     .order_by(ProgressRecord.recorded_at.desc())
-                     .limit(10)
-                     .all())
+    prog_query = db.query(ProgressRecord).filter(ProgressRecord.user_id == current_user.user_id)
+    if profile_id:
+        prog_query = prog_query.filter(ProgressRecord.profile_id == profile_id)
+        
+    progress_recs = prog_query.order_by(ProgressRecord.recorded_at.desc()).limit(10).all()
 
     return {
         'has_data': True,

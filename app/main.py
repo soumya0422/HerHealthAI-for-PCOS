@@ -10,7 +10,7 @@ from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 from app.config import settings
 
-from app.api.endpoints import health, predict, user_records, auth, diary
+from app.api.endpoints import health, predict, user_records, auth, diary, profiles
 
 logging.basicConfig(level=getattr(logging, os.getenv('LOG_LEVEL', 'INFO').upper()))
 logger = logging.getLogger(__name__)
@@ -64,6 +64,7 @@ app.include_router(health.router)
 app.include_router(auth.router, prefix="/auth")
 app.include_router(predict.router)
 app.include_router(user_records.router)
+app.include_router(profiles.router, prefix="/profiles")
 app.include_router(diary.router, prefix="/diary")
 
 base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

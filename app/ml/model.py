@@ -4,8 +4,8 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-MODEL_PATH = 'pcos_ml_model.pkl'
-METRICS_PATH = 'model_metrics.json'
+from continuous_learning.config import PRODUCTION_MODEL_PATH as MODEL_PATH
+from continuous_learning.config import PRODUCTION_METRICS_PATH as METRICS_PATH
 
 class ModelStore:
     ML_MODEL  = None
@@ -14,6 +14,7 @@ class ModelStore:
     X_COLUMNS = []
     CATEGORICAL_COLS = []
     FEATURE_IMPORTANCE = []
+    FEATURE_MEANS = None        # Training-set feature means for per-prediction analysis
     MODEL_METRICS = {}
 
 def load_ml_model():
@@ -26,6 +27,7 @@ def load_ml_model():
         ModelStore.X_COLUMNS        = data.get('X_columns', data.get('feature_names', []))
         ModelStore.CATEGORICAL_COLS = data.get('categorical_cols', [])
         ModelStore.FEATURE_IMPORTANCE = data.get('feature_importance', [])
+        ModelStore.FEATURE_MEANS    = data.get('feature_means', None)
         logger.info(f"ML model loaded: {type(ModelStore.ML_MODEL).__name__}, {len(ModelStore.X_COLUMNS)} features")
     except Exception as e:
         logger.error(f"Failed to load ML model: {e}")

@@ -1,0 +1,33 @@
+import os
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DB_PATH = os.path.join(BASE_DIR, 'continuous_learning', 'telemetry.db')
+
+ORIGINAL_DATA_PATH = os.path.join(BASE_DIR, '_dev_backup', 'PCOS_data_without_infertility.xlsx')
+PRODUCTION_MODEL_PATH = os.path.join(BASE_DIR, 'continuous_learning', 'production_model.pkl')
+PRODUCTION_METRICS_PATH = os.path.join(BASE_DIR, 'continuous_learning', 'production_model_metrics.json')
+
+CANDIDATE_MODEL_PATH = os.path.join(BASE_DIR, 'continuous_learning', 'candidate_model.pkl')
+CANDIDATE_METRICS_PATH = os.path.join(BASE_DIR, 'continuous_learning', 'candidate_metrics.json')
+BACKUP_DIR = os.path.join(BASE_DIR, 'continuous_learning', 'backups')
+
+# Thresholds for model replacement
+IMPROVEMENT_THRESHOLD = 0.01
+
+# Features needed for ML pipeline mapping
+EXPECTED_FEATURES = [
+    'Age (yrs)', 'Weight (Kg)', 'Height(Cm) ', 'BMI', 'Blood Group',
+    'Pulse rate(bpm) ', 'RR (breaths/min)', 'Hb(g/dl)', 'Cycle(R/I)',
+    'Cycle length(days)', 'Marraige Status (Yrs)', 'Pregnant(Y/N)',
+    'No. of aborptions', '  I   beta-HCG(mIU/mL)', 'II    beta-HCG(mIU/mL)',
+    'FSH(mIU/mL)', 'LH(mIU/mL)', 'FSH/LH', 'Hip(inch)', 'Waist(inch)',
+    'Waist:Hip Ratio', 'TSH (mIU/L)', 'AMH(ng/mL)', 'PRL(ng/mL)',
+    'Vit D3 (ng/mL)', 'PRG(ng/mL)', 'RBS(mg/dl)', 'Weight gain(Y/N)',
+    'hair growth(Y/N)', 'Skin darkening (Y/N)', 'Hair loss(Y/N)',
+    'Pimples(Y/N)', 'Fast food (Y/N)', 'Reg.Exercise(Y/N)',
+    'BP _Systolic (mmHg)', 'BP _Diastolic (mmHg)', 'Follicle No. (L)',
+    'Follicle No. (R)', 'Avg. F size (L) (mm)', 'Avg. F size (R) (mm)',
+    'Endometrium (mm)'
+]
+
+os.makedirs(BACKUP_DIR, exist_ok=True)

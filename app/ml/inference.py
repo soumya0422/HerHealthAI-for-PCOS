@@ -119,6 +119,138 @@ def build_feature_vector(user_input: Dict[str, Any]) -> np.ndarray:
     feature_vec = np.array([row.get(col, 0.0) for col in ModelStore.X_COLUMNS], dtype=float)
     return feature_vec
 
+FEATURE_LABELS = {
+    'Age (yrs)':              'Age',
+    'Weight (Kg)':            'Weight',
+    'Height(Cm)':             'Height',
+    'Height(Cm) ':            'Height',
+    'BMI':                    'BMI',
+    'Pulse rate(bpm) ':       'Pulse Rate',
+    'Pulse rate(bpm)':        'Pulse Rate',
+    'RR (breaths/min)':       'Breathing Rate',
+    'Hb(g/dl)':               'Hemoglobin',
+    'Cycle(R/I)':             'Cycle Regularity',
+    'Cycle length(days)':     'Cycle Length',
+    'Marraige Status (Yrs)':  'Marriage Years',
+    'Pregnant(Y/N)':          'Pregnancy Status',
+    'No. of aborptions':      'No. of Abortions',
+    'No. of abortions':       'No. of Abortions',
+    '  I   beta-HCG(mIU/mL)':'β-HCG (I)',
+    'I   beta-HCG(mIU/mL)':  'β-HCG (I)',
+    'II    beta-HCG(mIU/mL)': 'β-HCG (II)',
+    'FSH(mIU/mL)':            'FSH Level',
+    'LH(mIU/mL)':             'LH Level',
+    'FSH/LH':                 'FSH / LH Ratio',
+    'Hip(inch)':              'Hip Size',
+    'Waist(inch)':            'Waist Size',
+    'Waist:Hip Ratio':        'Waist-Hip Ratio',
+    'TSH (mIU/L)':            'TSH Level',
+    'AMH(ng/mL)':             'AMH Level',
+    'PRL(ng/mL)':             'Prolactin',
+    'Vit D3 (ng/mL)':         'Vitamin D3',
+    'PRG(ng/mL)':             'Progesterone',
+    'RBS(mg/dl)':             'Blood Sugar',
+    'Weight gain(Y/N)':       'Weight Gain',
+    'hair growth(Y/N)':       'Excess Hair Growth',
+    'Skin darkening (Y/N)':   'Skin Darkening',
+    'Hair loss(Y/N)':         'Hair Loss',
+    'Pimples(Y/N)':           'Pimples / Acne',
+    'Fast food (Y/N)':        'Fast Food Intake',
+    'Reg.Exercise(Y/N)':      'Regular Exercise',
+    'BP _Systolic (mmHg)':    'BP Systolic',
+    'BP _Diastolic (mmHg)':   'BP Diastolic',
+    'Follicle No. (L)':       'Follicle Count (L)',
+    'Follicle No. (R)':       'Follicle Count (R)',
+    'Avg. F size (L) (mm)':   'Avg Follicle Size (L)',
+    'Avg. F size (R) (mm)':   'Avg Follicle Size (R)',
+    'Endometrium (mm)':       'Endometrium Thickness',
+}
+
+def _tree_interpreter(model, scaled_input: np.ndarray) -> np.ndarray:
+    """
+    Tree Interpreter: exact per-prediction feature contributions for RandomForest.
+
+    For each tree, walks the decision path from root to leaf.
+    At each internal node, the feature used for the split gets credited
+    with the change in class-1 probability between parent and child.
+    Returns an array of shape (n_features,) with signed contributions
+    that sum to (prediction - base_rate).
+    """
+    sample = scaled_input.reshape(1, -1)
+    n_features = sample.shape[1]
+    contributions = np.zeros(n_features)
+
+    for tree in model.estimators_:
+        tree_model = tree.tree_
+        node_indicator = tree.decision_path(sample)
+        node_ids = node_indicator.indices
+
+        # Walk the path: each internal node contributes a probability shift
+        for depth in range(len(node_ids) - 1):
+            parent_id = node_ids[depth]
+            child_id  = node_ids[depth + 1]
+            feature_idx = tree_model.feature[parent_id]
+
+            # Class-1 proportion at parent vs child
+            parent_samples = tree_model.value[parent_id].flatten()
+            child_samples  = tree_model.value[child_id].flatten()
+
+            parent_prob = parent_samples[1] / parent_samples.sum() if parent_samples.sum() > 0 else 0
+            child_prob  = child_samples[1] / child_samples.sum() if child_samples.sum() > 0 else 0
+
+            contributions[feature_idx] += (child_prob - parent_prob)
+
+    # Average across all trees
+    contributions /= len(model.estimators_)
+    return contributions
+
+
+def _compute_key_factors(feature_vec: np.ndarray, scaled_vec: np.ndarray, risk_prob: float) -> list:
+    """
+    Compute per-prediction key factor contributions using Tree Interpreter.
+
+    Each contribution is the exact probability shift caused by that feature's
+    value as the prediction traverses the decision trees.  Positive contribution
+    means the feature pushed the risk UP; negative means it pushed it DOWN.
+    """
+    if not hasattr(ModelStore.ML_MODEL, 'estimators_'):
+        return []
+
+    columns = ModelStore.X_COLUMNS
+    contributions = _tree_interpreter(ModelStore.ML_MODEL, scaled_vec)
+
+    factors = []
+    for i, col in enumerate(columns):
+        contrib = float(contributions[i])
+
+        # Skip negligible contributions
+        if abs(contrib) < 0.001:
+            continue
+
+        direction = 'increases_risk' if contrib > 0 else 'decreases_risk'
+        label = FEATURE_LABELS.get(col, col.replace('(Y/N)', '').replace('(', '').replace(')', '').strip())
+
+        factors.append({
+            'feature':      col,
+            'label':        label,
+            'importance':   round(abs(contrib), 4),
+            'raw_contrib':  round(contrib, 4),
+            'value':        round(float(feature_vec[i]), 4),
+            'direction':    direction,
+        })
+
+    # Sort by absolute contribution descending, take top 10
+    factors.sort(key=lambda x: -x['importance'])
+    top_factors = factors[:10]
+
+    # Normalise importance to sum to 1.0 for clean percentage display
+    total_imp = sum(f['importance'] for f in top_factors) or 1.0
+    for f in top_factors:
+        f['importance'] = round(f['importance'] / total_imp, 4)
+
+    return top_factors
+
+
 def ml_predict(user_input: Dict[str, Any]) -> Dict[str, Any]:
     if ModelStore.ML_MODEL is None:
         raise RuntimeError("ML model not loaded, unable to predict")
@@ -137,17 +269,8 @@ def ml_predict(user_input: Dict[str, Any]) -> Dict[str, Any]:
     else:
         level = 'High'
 
-    contributions = []
-    if ModelStore.FEATURE_IMPORTANCE and hasattr(ModelStore.ML_MODEL, 'feature_importances_'):
-        importances = ModelStore.ML_MODEL.feature_importances_
-        for i, col in enumerate(ModelStore.X_COLUMNS):
-            raw_val = feature_vec[i]
-            contributions.append({
-                'feature': col,
-                'importance': float(importances[i]),
-                'value': round(float(raw_val), 4)
-            })
-        contributions = sorted(contributions, key=lambda x: -x['importance'])[:10]
+    # ── Per-prediction key factor analysis (Tree Interpreter) ──
+    contributions = _compute_key_factors(feature_vec, scaled, risk_prob)
 
     bmi = None
     w = float(user_input.get('weight', 0) or 0)

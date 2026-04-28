@@ -44,8 +44,13 @@
       <button class="btn btn-primary" onclick="openModal('register')">Sign Up</button>
     </div>
     <div class="nav-user hidden" id="navUser">
-      <div class="user-avatar" id="userAvatar">S</div>
-      <span class="user-name" id="userName">User</span>
+      <div class="profile-switcher">
+        <div class="user-avatar" id="userAvatar">S</div>
+        <select id="profileSelect" onchange="switchProfile(this.value)" class="profile-select-nav">
+          <!-- Profiles populated by JS -->
+        </select>
+      </div>
+      <button class="btn btn-icon-sm" onclick="openProfileModal()" title="Add Profile">➕</button>
       <button class="btn btn-sm btn-outline" onclick="logout()">Logout</button>
     </div>
   </div>
@@ -96,11 +101,52 @@
   </div>
 </div>
 
+<!-- ═══════════════════════ NEW PROFILE MODAL ═══════════════════════ -->
+<div class="modal-overlay hidden" id="profileModal" onclick="closeProfileModal()">
+  <div class="modal-card" onclick="event.stopPropagation()">
+    <button class="modal-close" onclick="closeProfileModal()">✕</button>
+    <h2 class="modal-title">Create Profile 👤</h2>
+    <p class="modal-sub">Add a family member or friend to track separately</p>
+    <div class="form-group">
+      <label class="form-label">Name</label>
+      <input type="text" id="newProfileName" class="form-input" placeholder="e.g. Mom, Jane, Sister" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Date of Birth</label>
+      <input type="date" id="newProfileDob" class="form-input" />
+    </div>
+    <div id="profileError" class="auth-error hidden"></div>
+    <button class="btn btn-primary btn-full" onclick="doCreateProfile()">Create Profile</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════ IDENTITY MISMATCH MODAL ═══════════════════════ -->
+<div class="modal-overlay hidden" id="mismatchModal">
+  <div class="modal-card">
+    <div class="modal-icon-warn">⚠️</div>
+    <h2 class="modal-title">Different User?</h2>
+    <p class="modal-sub" id="mismatchText">The Date of Birth entered doesn't match the current profile.</p>
+    <p class="modal-info">To prevent data overwrite, would you like to create a new profile for this person?</p>
+    
+    <div class="mismatch-actions">
+      <div class="form-group hidden" id="newNameGroup">
+        <label class="form-label">Enter Name for New Profile</label>
+        <input type="text" id="mismatchNewName" class="form-input" placeholder="e.g. Sister, Mom" />
+      </div>
+      <button class="btn btn-primary btn-full" id="mismatchNewBtn" onclick="showNewNameInput()">Yes, Create New Profile</button>
+      <button class="btn btn-outline btn-full" onclick="closeMismatchModal()">No, I'll fix the DOB</button>
+    </div>
+  </div>
+</div>
+
 <!-- ═══════════════════════ PAGES ═══════════════════════ -->
 <main id="app">
 
   <!-- ─────────── LANDING PAGE ─────────── -->
   <section class="page active" id="landingPage">
+
+    <!-- Profile Context Banner (Landing) -->
+    <div class="profile-ctx-banner hidden" id="landingProfileCtx"></div>
 
     <!-- Hero -->
     <div class="hero">
@@ -210,6 +256,7 @@
     <div class="assess-header">
       <h1 class="section-title">PCOS <span class="gradient-text">Risk Assessment</span></h1>
       <p class="assess-sub">Complete all 4 steps for the most accurate prediction</p>
+      <div class="profile-ctx-bar hidden" id="assessProfileCtx"></div>
     </div>
 
     <!-- Step Progress -->
@@ -232,10 +279,10 @@
         <p class="step-desc">Tell us about yourself to personalise your assessment.</p>
         <div class="input-grid">
           <div class="form-group">
-            <label class="form-label">Age <span class="req">*</span></label>
-            <div class="input-with-unit">
-              <input type="number" id="f_age" class="form-input" min="12" max="60" value="25" placeholder="25" />
-              <span class="unit">years</span>
+            <label class="form-label">Date of Birth <span class="req">*</span></label>
+            <div class="dob-input-wrap">
+              <input type="date" id="f_dob" class="form-input" onchange="handleDobChange()" />
+              <div class="age-badge-inline" id="ageDisplay">Age: --</div>
             </div>
           </div>
           <div class="form-group">
@@ -486,6 +533,7 @@
       <h1 class="section-title">Your <span class="gradient-text">Results</span></h1>
       <button class="btn btn-outline btn-sm" onclick="showPage('progress')">My Progress →</button>
     </div>
+    <div class="profile-ctx-bar centered hidden" id="resultsProfileCtx"></div>
 
     <!-- Risk Gauge + Level -->
     <div class="results-top">
@@ -533,6 +581,22 @@
         <div class="skeleton-line short"></div>
         <div class="skeleton-line"></div>
       </div>
+      </div>
+    </div>
+
+    <!-- Continuous Learning Feedback -->
+    <div class="feedback-section glass" id="feedbackSection" style="margin-top: 1.5rem; border: 1px solid rgba(168,85,247,0.3);">
+      <h3 class="section-subtitle">🧬 Help Improve HerHealthAI</h3>
+      <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1rem;">If you have a verified clinical diagnosis, please share it to help our AI continuously learn and improve its accuracy.</p>
+      <div id="feedbackFormArea">
+        <select id="clinicalDiagnosis" class="form-input" style="max-width: 250px; display: inline-block; margin-right: 0.5rem; margin-bottom: 0.5rem;">
+          <option value="">-- Verified Diagnosis --</option>
+          <option value="Yes">Yes, Diagnosed with PCOS</option>
+          <option value="No">No, Cleared of PCOS</option>
+        </select>
+        <button class="btn btn-primary btn-sm" onclick="submitClinicalFeedback()">Submit Feedback</button>
+      </div>
+      <div id="feedbackSuccess" class="hidden" style="color: #4ade80; font-weight: 500; font-size: 0.9rem;">✅ Thank you! Your feedback has been safely logged to improve the AI.</div>
     </div>
 
     <!-- Diet + Exercise + Lifestyle Tabs -->
@@ -584,6 +648,7 @@
     <div class="assess-header">
       <h1 class="section-title">My <span class="gradient-text">Progress</span></h1>
       <p class="assess-sub">Track your PCOS risk journey over time</p>
+      <div class="profile-ctx-bar hidden" id="progressProfileCtx"></div>
     </div>
 
     <div class="progress-require-auth" id="progressAuth">
@@ -667,6 +732,7 @@
     <div class="header-banner">
       <h1 class="page-title">Menstrual Cycle Diary 📖</h1>
       <p class="page-subtitle">Track your flow, symptoms, and mood. Powered by AI Insights.</p>
+      <div class="profile-ctx-bar hidden" id="diaryProfileCtx"></div>
     </div>
 
     <div class="progress-auth hidden" id="diaryAuth">
@@ -759,6 +825,6 @@
 <!-- ═══════════════════════ TOAST ═══════════════════════ -->
 <div class="toast hidden" id="toast"></div>
 
-<script src="app.js"></script>
+<script src="app_v3.js"></script>
 </body>
 </html>

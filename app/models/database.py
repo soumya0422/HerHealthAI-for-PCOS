@@ -15,9 +15,18 @@ class UserModel(Base):
     password   = Column(String, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
 
+class ProfileModel(Base):
+    __tablename__ = 'profiles'
+    profile_id  = Column(String, primary_key=True, index=True, default=lambda: str(uuid.uuid4()))
+    user_id     = Column(String, index=True, nullable=False)
+    name        = Column(String, nullable=False)
+    dob         = Column(String, nullable=True) # YYYY-MM-DD
+    created_at  = Column(DateTime, default=datetime.utcnow)
+
 class HealthRecord(Base):
     __tablename__ = 'health_records'
     record_id       = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    profile_id      = Column(String, index=True, nullable=False)
     user_id         = Column(String, index=True, nullable=False)
     input_features  = Column(Text, nullable=False)
     risk_score      = Column(Float, nullable=False)
@@ -28,6 +37,7 @@ class HealthRecord(Base):
 class ProgressRecord(Base):
     __tablename__ = 'progress_tracking'
     progress_id         = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    profile_id          = Column(String, index=True, nullable=False)
     user_id             = Column(String, index=True, nullable=False)
     previous_score      = Column(Float, nullable=False)
     current_score       = Column(Float, nullable=False)
@@ -37,6 +47,7 @@ class ProgressRecord(Base):
 class MenstrualRecord(Base):
     __tablename__ = 'menstrual_records'
     entry_id        = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    profile_id      = Column(String, index=True, nullable=False)
     user_id         = Column(String, index=True, nullable=False)
     log_date        = Column(String, nullable=False) # Storing YYYY-MM-DD
     period_status   = Column(String, nullable=False)

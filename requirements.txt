@@ -34,3 +34,4 @@ slowapi
 # Testing
 pytest
 pytest-asyncio
+schedule

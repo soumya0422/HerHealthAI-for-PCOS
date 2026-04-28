@@ -5,13 +5,25 @@ class RegisterRequest(BaseModel):
     name: str
     email: str
     password: str
+    dob: Optional[str] = None
 
 class LoginRequest(BaseModel):
     email: str
     password: str
 
+class ProfileCreate(BaseModel):
+    name: str
+    dob: str
+
+class ProfileOut(BaseModel):
+    profile_id: str
+    name: str
+    dob: Optional[str] = None
+
 class PredictRequest(BaseModel):
-    age:            Optional[float] = Field(None, ge=18, le=80, description="Age must be between 18 and 80")
+    profile_id:     Optional[str] = None
+    dob:            Optional[str] = None
+    age:            Optional[float] = Field(None, ge=10, le=80, description="Age must be between 10 and 80")
     weight:         Optional[float] = Field(None, ge=30, le=200, description="Weight must be between 30 and 200 kg")
     height:         Optional[float] = Field(None, ge=100, le=220, description="Height must be between 100 and 220 cm")
     bmi:            Optional[float] = Field(None, ge=10, le=60, description="BMI must be between 10 and 60")
@@ -42,6 +54,7 @@ class PredictRequest(BaseModel):
     save_record:    bool = True
 
 class DiaryEntryRequest(BaseModel):
+    profile_id:     Optional[str] = None
     date: str
     period_status: str
     flow_level: Optional[str] = None

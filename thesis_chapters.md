@@ -30,7 +30,7 @@ The recent ML diagnostic schemes suffer from three major shortcomings:
 3. **Lack of Actionable Insights**: Previous schemes stop at prediction and do not bridge the gap between the algorithmic diagnosis and personalized lifestyle intervention.
 
 ## 3.3 Overcoming the Problems
-The proposed work overcomes the problems of recent schemes by introducing a transparent, self-improving platform. It replaces static models with an ensemble approach combined with a native Tree Interpreter for exact, personalized factor analysis. Furthermore, it incorporates an automated retraining pipeline to prevent model degradation and leverages Large Language Models (LLMs) to instantly translate clinical feature contributions into actionable, patient-specific health protocols.
+The proposed work overcomes the problems of recent schemes by introducing a transparent, self-improving platform. It replaces static models with an ensemble approach combined with a native Tree Interpreter for exact, personalized factor analysis. Furthermore, it incorporates an automated retraining pipeline to prevent model degradation and leverages a deterministic, Tiered Rule-Based Expert System to instantly translate clinical feature contributions into actionable, patient-specific health protocols.
 
 ---
 
@@ -49,7 +49,7 @@ graph LR
     C -->|Random Forest| D[Risk Prediction]
     C -->|Tree Interpreter| E[Key Factors]
     
-    D --> F[Gemini AI]
+    D --> F[Rule-Based Expert Engine]
     E --> F
     
     F -->|Personalized Protocol| B
@@ -74,8 +74,8 @@ Implementation of a custom interpretability algorithm that traces the mathematic
 ### 4.2.4 Continuous Learning Pipeline
 Establishment of a telemetry feedback loop. The system automatically logs clinical outcomes, schedules periodic retraining of candidate models, evaluates their performance metrics, and automatically promotes the candidate to production if it mathematically outperforms the current active model.
 
-### 4.2.5 AI-Driven Interventions
-Utilizing the top contributing clinical factors to prompt a generative AI engine, yielding highly tailored dietary and lifestyle recommendations.
+### 4.2.5 Rule-Based Interventions
+Utilizing the top contributing clinical factors and mapping them to a multi-tiered expert rule engine, yielding highly tailored dietary, sleep, and lifestyle recommendations.
 
 ## 4.3 Algorithm Comparison
 
@@ -89,7 +89,7 @@ Table 4.1 compares the previous baseline algorithm with our proposed algorithm.
 | **Adaptability** | None (Requires manual code updates) | Automated Continuous Learning Pipeline |
 | **Interpretability** | Moderate (Simple rules) | High (Mathematically exact feature attribution) |
 | **Complexity Capture** | Linear only | Complex, Non-linear relationships |
-| **Actionable Output**| Binary Risk Score | Personalized Diet & Lifestyle Protocol via LLM |
+| **Actionable Output**| Binary Risk Score | Personalized Diet & Lifestyle Protocol via Expert Rule Engine |
 
 ---
 

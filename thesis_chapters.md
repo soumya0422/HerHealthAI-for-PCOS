@@ -185,7 +185,7 @@ The proposed system was implemented as a full-stack web application. Figure 5.9 
 # Chapter 6: Conclusion and Future Scope
 
 ## 6.1 Conclusion
-The investigation successfully developed a comprehensive AI-driven platform, **HerHealthAI**, for PCOS risk assessment and management. By utilizing a Random Forest ensemble model combined with a native Tree Interpreter, the system achieved a high diagnostic accuracy (99.63%) while maintaining total transparency. The integration of Gemini AI allowed for the translation of complex clinical findings into actionable lifestyle protocols, effectively bridging the gap between diagnosis and patient care. 
+The investigation successfully developed a comprehensive AI-driven platform, **HerHealthAI**, for PCOS risk assessment and management. By utilizing a Random Forest ensemble model combined with a native Tree Interpreter, the system achieved a high diagnostic accuracy (99.63%) while maintaining total transparency. The integration of a deterministic rule-based expert engine allowed for the precise translation of complex clinical findings into actionable lifestyle protocols, effectively bridging the gap between diagnosis and patient care.
 
 Furthermore, the implementation of an automated continuous learning pipeline ensures that the system remains relevant and improves as more clinical feedback is ingested, solving the problem of static model degradation seen in previous schemes.
 

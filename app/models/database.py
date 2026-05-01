@@ -32,6 +32,7 @@ class HealthRecord(Base):
     risk_score      = Column(Float, nullable=False)
     risk_level      = Column(String, nullable=False)
     recommendations = Column(Text, nullable=True)
+    lifestyle_features = Column(Text, nullable=True)
     prediction_date = Column(DateTime, default=datetime.utcnow, index=True)
 
 class ProgressRecord(Base):

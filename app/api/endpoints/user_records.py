@@ -5,27 +5,43 @@ from app.db.session import get_db
 from app.core.security import get_current_user
 from app.models.database import UserModel, HealthRecord, ProgressRecord
 from app.models.schemas import PredictRequest
-from app.ml.inference import get_gemini_recommendations
+from app.ml.inference import ml_predict
+from app.ml.recommendation_engine import get_rule_based_recommendations
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 
 limiter = Limiter(key_func=get_remote_address)
 router = APIRouter()
 
-@router.post('/recommend', tags=['Recommendations'])
+from app.models.schemas import PlanGenerateRequest
+from pydantic import BaseModel
+
+@router.post('/plan/generate', tags=['Recommendations'])
 @limiter.limit("100/minute")
-def recommend(request: Request, req: PredictRequest):
+def plan_generate(request: Request, req: PlanGenerateRequest, db: Session = Depends(get_db)):
+    """
+    Step 2: Generate personalized Diet, Exercise, Lifestyle, and Sleep plans based on the assessment result and new lifestyle inputs.
+    """
     try:
-        user_input = req.model_dump()
-        bmi = None
-        if user_input.get('weight') and user_input.get('height'):
-            w, h = float(user_input['weight']), float(user_input['height'])
-            if h > 0:
-                bmi = round(w / ((h / 100) ** 2), 2)
-                user_input['bmi'] = bmi
-        recs = get_gemini_recommendations(user_input, 50.0, 'Moderate')
-        return {'recommendations': recs}
+        user_input = req.assessment_result.features
+        risk_pct = req.assessment_result.risk_percentage
+        risk_level = req.assessment_result.risk_level
+        lifestyle_inputs = req.lifestyle_inputs.model_dump()
+
+        # Generate full rule-based recommendations with Tier 3 logic
+        recs = get_rule_based_recommendations(user_input, risk_pct, risk_level, lifestyle_inputs)
+
+        # If a record ID is provided, try to save the updated recommendations
+        if req.assessment_result.record_id:
+            record = db.query(HealthRecord).filter(HealthRecord.record_id == req.assessment_result.record_id).first()
+            if record:
+                record.recommendations = json.dumps(recs)
+                record.lifestyle_features = json.dumps(lifestyle_inputs)
+                db.commit()
+
+        return recs
     except Exception as e:
+        db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get('/history', tags=['Progress'])

@@ -287,6 +287,22 @@ def ml_predict(user_input: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 def get_gemini_recommendations(user_input: Dict, risk_pct: float, risk_level: str) -> Dict[str, Any]:
+    """
+    Primary recommendation function.
+    Routes through the rule-based engine by default.
+    Gemini LLM is NOT used — the rule engine provides deterministic,
+    medically relevant, and culturally appropriate recommendations.
+    """
+    from app.ml.recommendation_engine import get_rule_based_recommendations
+    return get_rule_based_recommendations(user_input, risk_pct, risk_level)
+
+
+def _get_gemini_llm_recommendations(user_input: Dict, risk_pct: float, risk_level: str) -> Dict[str, Any]:
+    """
+    OPTIONAL: Gemini LLM enhancer — kept for future use but NOT called by default.
+    Call this only if you explicitly want AI-generated text on top of rule outputs.
+    Requires a valid GEMINI_API_KEY in .env.
+    """
     if not settings.GEMINI_API_KEY:
         return _static_recommendations(risk_level)
     try:
@@ -337,39 +353,12 @@ Provide a structured response with EXACTLY these sections in JSON format:
         return _static_recommendations(risk_level)
 
 def _static_recommendations(risk_level: str) -> Dict[str, Any]:
-    base = {
-        'health_insights': [
-            'Your hormonal balance is a key factor in PCOS risk.',
-            'Maintaining a healthy weight can significantly reduce symptoms.',
-            'Regular physical activity helps regulate insulin and hormones.'
-        ],
-        'diet_plan': {
-            'include': ['Leafy greens', 'Whole grains', 'Lean proteins', 'Berries', 'Healthy fats'],
-            'avoid': ['Refined sugars', 'White bread', 'Processed foods', 'Excess dairy'],
-            'meal_timing': 'Eat 3 balanced meals with 1-2 healthy snacks.'
-        },
-        'exercise_plan': {
-            'weekly_schedule': [
-                {'day': 'Monday', 'activity': 'Brisk walking', 'duration': '30 min'},
-                {'day': 'Wednesday', 'activity': 'Yoga', 'duration': '45 min'},
-                {'day': 'Friday', 'activity': 'Light strength training', 'duration': '40 min'},
-                {'day': 'Sunday', 'activity': 'Cycling', 'duration': '45 min'},
-            ],
-            'tip': 'Exercise improves insulin sensitivity and helps regulate periods.'
-        },
-        'lifestyle_tips': [
-            'Sleep 7–8 hours per night',
-            'Stay hydrated',
-            'Practice stress management',
-            'Track your menstrual cycle',
-            'Limit alcohol and avoid smoking'
-        ],
-        'doctor_advice': 'We encourage you to share these results with your gynecologist.',
-        'source': 'static'
-    }
-    if risk_level == 'High':
-        base['health_insights'].insert(0, '⚠️ Elevated risk. Please consult a healthcare provider soon.')
-    return base
+    """
+    Minimal hard-coded fallback — only used if rules.json fails to load.
+    In normal operation, the rule engine in recommendation_engine.py is used.
+    """
+    from app.ml.recommendation_engine import get_rule_based_recommendations
+    return get_rule_based_recommendations({}, 50.0, risk_level)
 
 def get_cycle_diary_insights(user_history: list, new_entry: dict) -> dict:
     if not settings.GEMINI_API_KEY:

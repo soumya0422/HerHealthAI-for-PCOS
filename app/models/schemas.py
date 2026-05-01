@@ -62,3 +62,23 @@ class DiaryEntryRequest(BaseModel):
     mood: Optional[str] = None
     notes: Optional[str] = None
 
+class LifestyleInputs(BaseModel):
+    wake_up_time: str = Field(..., description="Time input")
+    sleep_duration: str = Field(..., description="<5 hours, 5-6 hours, 6-7 hours, 7-8 hours, 8+ hours")
+    activity_level: str = Field(..., description="Sedentary, Moderate, Active")
+    stress_level: str = Field(..., description="Low, Medium, High")
+    exercise_frequency: str = Field(..., description="None, 1-2 days, 3-5 days, Daily")
+    food_preference: str = Field(..., description="Veg, Non-Veg, Vegan")
+    water_intake: str = Field(..., description="Low, Medium, High")
+    job_type: str = Field(..., description="Corporate / Desk Job, Active / Field Work, Sports Woman / Athlete, Student, Homemaker")
+
+class AssessmentResult(BaseModel):
+    risk_percentage: float
+    risk_level: str
+    features: dict
+    record_id: Optional[str] = None
+
+class PlanGenerateRequest(BaseModel):
+    assessment_result: AssessmentResult
+    lifestyle_inputs: LifestyleInputs
+

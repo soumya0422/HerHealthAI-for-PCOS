@@ -1,0 +1,213 @@
+{
+  "LOW_RISK": {
+    "diet": {
+      "strategy": "Gentle Maintenance",
+      "include": [
+        "One seasonal fruit daily (Amla, Guava, or Papaya)",
+        "A small bowl of fresh Dahi (Curd) daily",
+        "Include one serving of Dal or Sprouts per day",
+        "Drink 8 glasses of water"
+      ],
+      "avoid": [
+        "Tea or Coffee on an empty stomach",
+        "Excess packaged snacks"
+      ],
+      "meal_timing": "Follow a consistent meal schedule. Eat breakfast within 1 hour of waking up."
+    },
+    "exercise": {
+      "weekly_schedule": [
+        { "day": "Daily", "activity": "15–20 min of any activity you enjoy — Walking, Dancing, or light Yoga", "duration": "20 min" },
+        { "day": "Daily", "activity": "Malasana (Deep Squat pose) — hold for 1 minute to maintain pelvic health", "duration": "1 min" }
+      ],
+      "tip": "Consistency matters more than intensity. Even a 15-minute walk every day is enough at this stage."
+    },
+    "lifestyle": {
+      "tips": [
+        "Wake up and sleep at roughly the same time every day to keep your Pulse Rate and Cortisol stable.",
+        "Sit in morning sunlight for 10–15 minutes (balcony or near a window) to naturally support Vitamin D3.",
+        "Avoid screens 30 minutes before bed for better sleep quality."
+      ],
+      "doctor_advice": "Your risk is currently low. Keep tracking your cycle monthly and schedule an annual check-up."
+    }
+  },
+
+  "MODERATE_RISK": {
+    "diet": {
+      "strategy": "Active Symptom Management",
+      "include": [
+        "Switch from Maida to Atta (Whole Wheat) or Jowar flour",
+        "Start your morning with Methi (Fenugreek) seed water — soak 1 tsp overnight",
+        "Ensure at least 50% of your plate is Sabzi (Ghiya, Tori, Bhindi, or Palak)",
+        "Add Pudina (Spearmint) chutney or tea to your daily routine",
+        "Include a bowl of Dal, Chana, or Sprouts in every main meal",
+        "Use Sarson (Mustard) oil or small amounts of Ghee instead of refined oil"
+      ],
+      "avoid": [
+        "Maida-based items (Biscuits, White Bread, Samosa, Bhatura)",
+        "Limit Sugar to once daily — including in tea and desserts",
+        "Limit Gur (Jaggery) — it spikes blood sugar almost as fast as white sugar",
+        "Double-refined vegetable oils"
+      ],
+      "meal_timing": "Eat 3 balanced meals. Never skip breakfast. Aim to finish dinner before 9 PM."
+    },
+    "exercise": {
+      "weekly_schedule": [
+        { "day": "Monday / Wednesday / Friday", "activity": "5 rounds of Surya Namaskar (Sun Salutation)", "duration": "20 min" },
+        { "day": "Daily (after Lunch & Dinner)", "activity": "10-minute Post-Meal Walk — use the food's sugar before it stores as fat", "duration": "10 min" },
+        { "day": "Tuesday / Saturday", "activity": "Chakki Chalan (Churning Mill pose) — sit and rotate torso, excellent for Cycle Regularity", "duration": "10 min" }
+      ],
+      "tip": "The Post-Meal Walk is the single most important habit for managing blood sugar and weight at this risk level."
+    },
+    "lifestyle": {
+      "tips": [
+        "Finish dinner by 8:30 PM and aim to sleep by 10:30 PM. Late nights are a primary driver of high LH/FSH ratios.",
+        "Get 15 minutes of direct morning sunlight to naturally manage your Vitamin D3 levels.",
+        "Never have Tea or Coffee with your meals — it blocks iron absorption and affects Hemoglobin (Hb).",
+        "Have your morning chai only after eating a small snack (nuts, makhana) to prevent cortisol spikes.",
+        "Start tracking your menstrual cycle dates on any app or a simple notebook."
+      ],
+      "doctor_advice": "We strongly recommend consulting a gynecologist for a hormonal blood panel (LH, FSH, AMH, and TSH)."
+    }
+  },
+
+  "HIGH_RISK": {
+    "diet": {
+      "strategy": "Clinical Intervention — The Plate Method",
+      "include": [
+        "The Plate Rule: 50% Sabzi, 25% Dal/Protein, 25% Roti/Rice — at every meal",
+        "Methi-Ajwain water first thing every morning (soak overnight, drink on waking)",
+        "Sprouts or Chana at lunch daily for protein and fiber",
+        "Replace all cooking oil with Sarson (Mustard) Oil or pure Ghee (in small quantity)",
+        "Add Pudina water or fresh Pudina chutney daily to help lower androgen levels",
+        "Include Curd (Dahi) instead of Buffalo Milk to reduce androgen-linked inflammation"
+      ],
+      "avoid": [
+        "STRICT: Complete break from Maida for at least 4 weeks",
+        "STRICT: No White Sugar — switch to a small amount of Stevia or completely eliminate",
+        "STRICT: No Double-Refined Vegetable Oils",
+        "Avoid Gur (Jaggery) entirely if RBS is elevated",
+        "Avoid heavy Buffalo Milk, especially if Acne or Hair Growth is reported",
+        "No processed or packaged snacks"
+      ],
+      "meal_timing": "Eat dinner strictly before 8 PM. A 12-hour gap between dinner and breakfast (e.g., 8 PM to 8 AM) is highly beneficial for insulin regulation."
+    },
+    "exercise": {
+      "weekly_schedule": [
+        { "day": "Monday / Wednesday / Friday", "activity": "Chair Squats (10 reps x 3 sets) + Wall Push-ups — builds muscle for insulin sensitivity", "duration": "20 min" },
+        { "day": "Daily", "activity": "Mandatory 10-minute Post-Meal Walk after both Lunch and Dinner", "duration": "10 min" },
+        { "day": "Tuesday / Thursday / Saturday", "activity": "10 minutes of Anulom Vilom (Alternate Nostril Breathing) to lower high Pulse Rate and Cortisol", "duration": "10 min" },
+        { "day": "Sunday", "activity": "5 rounds of Surya Namaskar as a full-body reset", "duration": "20 min" }
+      ],
+      "tip": "Focus on Muscle Loading (Squats, Push-ups) over pure Cardio at this stage — muscles are the body's primary insulin disposal system."
+    },
+    "lifestyle": {
+      "tips": [
+        "CRITICAL: Lights out strictly by 10:30 PM. No screens at least 1 hour before bed. Sleep deprivation directly spikes LH and Cortisol.",
+        "Track your Weight and Waist-Hip Ratio every week — note it down to see real progress.",
+        "Spend 15 minutes in morning sunlight daily. This is the easiest way to address low Vitamin D3 without supplements.",
+        "Practice the 'Chai Rule': Never drink Tea or Coffee on an empty stomach or with meals. This protects your Hemoglobin (Hb).",
+        "Consider a daily stress-relief habit: 10 minutes of journaling, prayer, or simply sitting quietly away from your phone."
+      ],
+      "doctor_advice": "⚠️ Your risk is significantly elevated. Please consult a gynecologist or endocrinologist as soon as possible for a full hormonal panel."
+    }
+  },
+
+  "SYMPTOM_OVERLAYS": {
+    "high_bmi": {
+      "description": "Triggered when BMI > 25",
+      "diet_add": ["Add Ajwain (Carom Seeds) to your Tadka daily — helps with bloating and fat metabolism"],
+      "diet_avoid": ["Avoid eating rice at dinner — switch to a small Roti or soup instead"],
+      "exercise_add": ["Prioritize Chair Squats and Resistance exercises over pure walking for better insulin sensitivity"],
+      "lifestyle_add": ["Weigh yourself weekly at the same time (morning, before eating) to track progress accurately"]
+    },
+    "pimples_acne": {
+      "description": "Triggered when pimples == 1 (Acne reported)",
+      "diet_add": ["Replace Buffalo Milk with Cow Milk or Curd (Dahi)", "Add fresh Pudina (Spearmint) water or chutney daily — clinically shown to lower androgens"],
+      "diet_avoid": ["Avoid heavy dairy (Paneer, Butter) — high saturated fat increases androgen activity"],
+      "lifestyle_add": ["Use non-comedogenic or oil-free skincare products", "Change your pillowcase every 2–3 days to reduce bacteria"]
+    },
+    "hair_loss_growth": {
+      "description": "Triggered when hair_loss == 1 OR hair_growth == 1",
+      "diet_add": ["Soak and eat 5–7 Badam (Almonds) daily for scalp nourishment", "Add Amla (Indian Gooseberry) — fresh, juice, or powder — for DHT reduction"],
+      "lifestyle_add": ["Avoid tight hairstyles that stress the scalp", "Apply Bhringraj or Coconut oil with a gentle scalp massage twice a week"]
+    },
+    "high_rbs": {
+      "description": "Triggered when RBS > 140 mg/dL (elevated blood sugar)",
+      "diet_add": ["Methi (Fenugreek) seed water is mandatory every morning", "Cinnamon (Dalchini) — half teaspoon in warm water daily — helps regulate blood sugar"],
+      "diet_avoid": ["Strict avoidance of Gur (Jaggery), Honey, and all sweets", "No fruit juices — eat whole fruits only, with their fiber"],
+      "lifestyle_add": ["Walk for exactly 10 minutes after every single meal — this is non-negotiable for blood sugar management"]
+    },
+    "irregular_cycle": {
+      "description": "Triggered when cycle_regular == 0 (Irregular cycle)",
+      "exercise_add": ["Chakki Chalan (Churning Mill exercise) for 10 minutes — the best traditional exercise for cycle regularity", "Malasana (Deep Squat) — hold for 1 minute daily to improve pelvic blood flow"],
+      "lifestyle_add": ["Try to maintain a consistent sleep-wake schedule 7 days a week — even on weekends", "Track your cycle start dates in a notebook or app — even irregular cycles have their own pattern"]
+    },
+    "low_vitd": {
+      "description": "Triggered when Vitamin D3 < 20 ng/mL",
+      "lifestyle_add": ["Spend 15 minutes in direct morning sunlight (before 10 AM) daily — expose arms and legs if possible", "Hang your laundry outside or water plants to naturally build sun time into your routine"]
+    },
+    "fertility_focus": {
+      "description": "Triggered when marriage_years > 5 and risk is Moderate or High",
+      "lifestyle_add": [
+        "Track your ovulation window (typically day 10–18 of your cycle) using a Basal Body Temperature thermometer",
+        "Consistency in sleeping by 10 PM is vital — it directly regulates the LH surge responsible for ovulation",
+        "Reduce any high-intensity physical stress during the ovulation window"
+      ],
+      "diet_add": ["Increase Folate-rich foods: Palak (Spinach), Methi, and Sprouts are excellent natural sources"]
+    },
+    "sedentary_no_exercise": {
+      "description": "Triggered when exercise == 0 (No regular exercise reported)",
+      "exercise_add": ["Start with just the 10-minute Post-Meal Walk — this one habit alone significantly improves insulin sensitivity", "Chakki Chalan can be done while watching TV — no special equipment or space needed"]
+    },
+    "high_fast_food": {
+      "description": "Triggered when fast_food == 1 (High fast food intake)",
+      "diet_add": ["Prepare a batch of Roasted Chana or Makhana at the start of the week as a replacement snack", "Keep cut fruits or a bowl of Dahi ready in the fridge to avoid reaching for packaged snacks"],
+      "diet_avoid": ["Avoid ordering food after 7 PM — cook simple, quick meals instead (e.g., Khichdi, Dalia, Egg)"]
+    }
+  },
+
+  "LIFESTYLE_OVERLAYS": {
+    "stress_high": {
+      "condition": "stress_level == High",
+      "lifestyle_add": ["High stress means high Cortisol. Focus heavily on stress management rather than high-intensity workouts", "Add 10 minutes of Anulom Vilom or deep breathing daily"],
+      "exercise_downgrade_intensity": true
+    },
+    "activity_sedentary": {
+      "condition": "activity_level == Sedentary",
+      "exercise_add": ["Start extremely small: Commit to just a 10-minute walk after lunch. Do not attempt heavy workouts yet to avoid burnout."],
+      "exercise_downgrade_intensity": true
+    },
+    "exercise_none": {
+      "condition": "exercise_frequency == None",
+      "exercise_add": ["Begin with light mobility or stretching for 5 minutes a day before building up to structured workouts."]
+    },
+    "exercise_daily": {
+      "condition": "exercise_frequency == Daily",
+      "lifestyle_add": ["Since you exercise daily, ensure you are not over-training, which can elevate cortisol and mimic PCOS symptoms. Prioritize at least one active recovery day."]
+    },
+    "water_low": {
+      "condition": "water_intake == Low",
+      "lifestyle_add": ["Your water intake is low. Dehydration directly worsens insulin resistance. Drink at least 8 glasses of water daily."]
+    },
+    "job_corporate": {
+      "condition": "job_type == Corporate / Desk Job",
+      "lifestyle_add": ["Since you have a desk job, set an alarm to stand up and stretch for 2 minutes every hour to improve blood circulation."],
+      "exercise_add": ["Incorporate desk stretches, neck rotations, and short walks during your office breaks to combat sedentarism."]
+    },
+    "job_sports": {
+      "condition": "job_type == Sports Woman / Athlete",
+      "diet_add": ["As an athlete, ensure you are getting adequate complex carbohydrates and high-quality protein to support recovery and hormone balance."],
+      "lifestyle_add": ["Monitor your training load carefully. Over-training can spike cortisol and worsen hormonal imbalances like PCOS."]
+    },
+    "job_student": {
+      "condition": "job_type == Student",
+      "lifestyle_add": ["Limit late-night studying and prioritize 7-8 hours of sleep. Screen light from laptops disrupts melatonin and exacerbates hormonal issues."],
+      "diet_add": ["Keep healthy snacks like roasted makhana or nuts on your study desk to avoid reaching for sugary/junk food during long study sessions."]
+    },
+    "job_homemaker": {
+      "condition": "job_type == Homemaker",
+      "lifestyle_add": ["Remember to prioritize yourself. Carve out 30 minutes of uninterrupted 'me-time' daily for your meals and exercise without distractions."],
+      "exercise_add": ["While household chores keep you active, they don't replace structured exercise. Dedicate 20 minutes to yoga or a brisk walk specifically for fitness."]
+    }
+  }
+}

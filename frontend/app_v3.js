@@ -21,9 +21,11 @@ let state = {
   symptoms: { weight_gain:0, hair_growth:0, skin_darkening:0, hair_loss:0, pimples:0, fast_food:0, exercise:0 },
   diarySymptoms: [],
   cycleRegular: 1,
-  lastResult: null,
+  lastResult: null,           // never restore from localStorage — user must do assessment this session
   activeProfile: null,
-  profiles: []
+  profiles: [],
+  assessmentCompleted: false, // session-only: reset on every page load
+  planGenerated: false        // session-only: reset on every page load
 };
 
 // ─── ON LOAD ───
@@ -91,11 +93,30 @@ function initParticles() {
 //  NAVIGATION
 // ════════════════════════════════
 function showPage(name) {
+  // My Plan access control
+  if (name === 'myplan') {
+    if (!state.assessmentCompleted) {
+        toast('Please complete your assessment first to unlock your personalized plan.');
+        showPage('assess');
+        return;
+    }
+    
+    // Toggle form vs plan
+    if (state.planGenerated && state.lastResult?.recommendations?.diet_plan) {
+        document.querySelector('#myPlanPage .plan-form-container').classList.add('hidden');
+        document.getElementById('recsSection').classList.remove('hidden');
+        renderPlanTabs();
+    } else {
+        document.querySelector('#myPlanPage .plan-form-container').classList.remove('hidden');
+        document.getElementById('recsSection').classList.add('hidden');
+    }
+  }
+
   document.querySelectorAll('.page').forEach(p => { p.classList.remove('active'); p.classList.add('hidden'); });
   document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
 
-  const pageMap = { landing: 'landingPage', assess: 'assessPage', results: 'resultsPage', progress: 'progressPage', diary: 'diaryPage' };
-  const navMap  = { landing: 'navHome', assess: 'navAssess', results: null, progress: 'navProgress', diary: 'navDiary' };
+  const pageMap = { landing: 'landingPage', assess: 'assessPage', results: 'resultsPage', progress: 'progressPage', diary: 'diaryPage', myplan: 'myPlanPage' };
+  const navMap  = { landing: 'navHome', assess: 'navAssess', results: null, progress: 'navProgress', diary: 'navDiary', myplan: 'navMyPlan' };
 
   const page = document.getElementById(pageMap[name]);
   if (page) { page.classList.remove('hidden'); page.classList.add('active'); }
@@ -107,8 +128,33 @@ function showPage(name) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+function switchRecTab(tab) {
+  const tabs    = { diet: 'tabDiet', exercise: 'tabExercise', lifestyle: 'tabLifestyle', sleep: 'tabSleep' };
+  const content = { diet: 'tabContentDiet', exercise: 'tabContentExercise', lifestyle: 'tabContentLifestyle', sleep: 'tabContentSleep' };
+
+  // Deactivate all
+  Object.values(tabs).forEach(id    => document.getElementById(id)?.classList.remove('active'));
+  Object.values(content).forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.classList.add('hidden'); el.classList.remove('active'); }
+  });
+
+  // Activate selected
+  document.getElementById(tabs[tab])?.classList.add('active');
+  const contentEl = document.getElementById(content[tab]);
+  if (contentEl) { contentEl.classList.remove('hidden'); contentEl.classList.add('active'); }
+}
+
 function scrollToHow() { document.getElementById('howSection')?.scrollIntoView({ behavior: 'smooth' }); }
 function startAssessment() { showPage('assess'); }
+
+function resetAndShowForm() {
+  state.planGenerated = false;
+  localStorage.setItem('hhPlanGenerated', 'false');
+  // Show form, hide tabs
+  document.querySelector('#myPlanPage .step-card-form')?.classList.remove('hidden');
+  document.getElementById('recsSection')?.classList.add('hidden');
+}
 
 // ════════════════════════════════
 //  AUTH
@@ -625,23 +671,25 @@ async function runPrediction() {
     // Anonymous prediction (also used as fallback when token expired)
     if (!result) {
       payload.save_record = false;
-      const [predRes, recRes] = await Promise.all([
-        fetch(`${API_BASE}/predict`, {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        }),
-        fetch(`${API_BASE}/recommend`, {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        })
-      ]);
+      const predRes = await fetch(`${API_BASE}/predict`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      
       if (!predRes.ok) { const e = await predRes.json(); throw new Error(e.detail || 'Prediction failed'); }
-      const pred = await predRes.json();
-      const recs = recRes.ok ? (await recRes.json()).recommendations : {};
-      result = { ...pred, recommendations: recs };
+      result = await predRes.json();
+      result.guestPayload = payload; // Stash for step 2
     }
 
     state.lastResult = result;
+    state.lastResult.inputPayload = payload; // Always stash raw features for plan generation
+    state.assessmentCompleted = true;
+    // Reset plan state — new assessment means a fresh plan is needed
+    state.planGenerated = false;
+    localStorage.setItem('hhAssessmentCompleted', 'true');
+    localStorage.setItem('hhPlanGenerated', 'false');
+    localStorage.setItem('hhLastResult', JSON.stringify(state.lastResult));
+    
     showResults(result);
     showPage('results');
 
@@ -708,33 +756,135 @@ function showResults(data) {
       <span>${ins}</span>
     </div>`).join('');
 
+}
+
+// ════════════════════════════════
+//  PLAN TABS RENDERER
+// ════════════════════════════════
+function renderPlanTabs() {
+  const recs = state.lastResult?.recommendations;
+  if (!recs) { console.warn('renderPlanTabs: no recommendations found'); return; }
+
   // ─ Diet
-  const dietInc = recs.diet_plan?.include || [];
-  const dietAvd = recs.diet_plan?.avoid   || [];
-  document.getElementById('dietInclude').innerHTML = dietInc.map(d => `<li>${d}</li>`).join('');
-  document.getElementById('dietAvoid').innerHTML   = dietAvd.map(d => `<li>${d}</li>`).join('');
-  document.getElementById('mealTiming').textContent = recs.diet_plan?.meal_timing || '';
+  const dietPlan = recs.diet_plan || {};
+  document.getElementById('dietInclude').innerHTML = (dietPlan.include || []).map(d => `<li>${d}</li>`).join('') || '<li>No items found</li>';
+  document.getElementById('dietAvoid').innerHTML   = (dietPlan.avoid   || []).map(d => `<li>${d}</li>`).join('') || '<li>No items found</li>';
+  document.getElementById('mealTiming').textContent = dietPlan.meal_timing || '';
 
   // ─ Exercise
-  const schedule = recs.exercise_plan?.weekly_schedule || [];
-  document.getElementById('exerciseSchedule').innerHTML = schedule.map(s => `
+  const exPlan = recs.exercise_plan || {};
+  const sched  = exPlan.weekly_schedule || [];
+  document.getElementById('exerciseSchedule').innerHTML = sched.map(s => `
     <div class="schedule-card">
-      <div class="sched-day">${s.day}</div>
+      <div class="sched-day">${s.day || s.days || ''}</div>
       <div class="sched-activity">${s.activity}</div>
       <div class="sched-dur">⏱ ${s.duration}</div>
-    </div>`).join('');
-  document.getElementById('exerciseTip').innerHTML = `<strong>💡 Why exercise helps:</strong> ${recs.exercise_plan?.tip || ''}`;
+    </div>`).join('') || '<p style="color:var(--text-muted)">No schedule found.</p>';
+  document.getElementById('exerciseTip').innerHTML = exPlan.tip ? `<strong>💡 Why exercise helps:</strong> ${exPlan.tip}` : '';
 
   // ─ Lifestyle
   const tips = recs.lifestyle_tips || [];
-  document.getElementById('lifestyleList').innerHTML = tips.map((t, i) => `
-    <div class="lifestyle-item">
-      <span class="lifestyle-num">${i + 1}</span>
-      <span>${t}</span>
-    </div>`).join('');
-  if (recs.doctor_advice) {
-    document.getElementById('doctorBox').innerHTML = `🩺 <strong>Doctor's Note:</strong> ${recs.doctor_advice}`;
-    document.getElementById('doctorBox').style.display = 'block';
+  document.getElementById('lifestyleList').innerHTML = tips.length
+    ? tips.map((t, i) => `<div class="lifestyle-item"><span class="lifestyle-num">${i + 1}.</span> <span>${t}</span></div>`).join('')
+    : '<p style="color:var(--text-muted)">No lifestyle tips found.</p>';
+
+  // ─ Doctor box
+  const doctorBox = document.getElementById('doctorBox');
+  if (doctorBox) {
+    if (recs.personalized_notes && Object.keys(recs.personalized_notes).length > 0) {
+      const notesHtml = Object.values(recs.personalized_notes).map(n => `<li>${n}</li>`).join('');
+      doctorBox.innerHTML = `🩺 <strong>Personalized Notes:</strong><ul>${notesHtml}</ul>` + (recs.doctor_advice ? `<br/>🩺 <strong>Doctor's Advice:</strong> ${recs.doctor_advice}` : '');
+      doctorBox.style.display = 'block';
+    } else if (recs.doctor_advice) {
+      doctorBox.innerHTML = `🩺 <strong>Doctor's Note:</strong> ${recs.doctor_advice}`;
+      doctorBox.style.display = 'block';
+    } else {
+      doctorBox.style.display = 'none';
+    }
+  }
+
+  // ─ Sleep
+  const sleepList = document.getElementById('sleepList');
+  if (sleepList) {
+    const sleepSuggestions = recs.sleep_suggestions || [];
+    sleepList.innerHTML = sleepSuggestions.length
+      ? sleepSuggestions.map((t, i) => `<div class="lifestyle-item"><span class="lifestyle-num">${i + 1}.</span> <span>${t}</span></div>`).join('')
+      : '<p style="color:var(--text-muted)">No sleep suggestions found.</p>';
+  }
+
+  // Reset tabs to Diet
+  document.querySelectorAll('.recs-tabs .tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => { c.classList.add('hidden'); c.classList.remove('active'); });
+  document.getElementById('tabDiet')?.classList.add('active');
+  document.getElementById('tabContentDiet')?.classList.remove('hidden');
+  document.getElementById('tabContentDiet')?.classList.add('active');
+}
+
+// ════════════════════════════════
+//  LIFESTYLE PLAN GENERATION
+// ════════════════════════════════
+async function generateMyPlan() {
+  if (!state.lastResult) {
+    toast('⚠️ No active assessment record found. Please start a new assessment.');
+    return;
+  }
+
+  const btn  = document.getElementById('genPlanBtnText');
+  const spin = document.getElementById('genPlanSpinner');
+  btn.classList.add('hidden'); spin.classList.remove('hidden');
+
+  const lifestyleInputs = {
+    wake_up_time: document.getElementById('ls_wake_up').value,
+    sleep_duration: document.getElementById('ls_sleep').value,
+    activity_level: document.querySelector('input[name="ls_activity"]:checked').value,
+    stress_level: document.querySelector('input[name="ls_stress"]:checked').value,
+    exercise_frequency: document.querySelector('input[name="ls_exercise"]:checked').value,
+    food_preference: document.getElementById('ls_food').value,
+    water_intake: document.getElementById('ls_water').value,
+    job_type: document.querySelector('input[name="ls_job"]:checked').value
+  };
+
+
+  const assessmentResult = {
+      risk_percentage: state.lastResult.risk_percentage || 0,
+      risk_level: state.lastResult.risk_level || "Low",
+      features: state.lastResult.inputPayload || state.lastResult.guestPayload || {},
+      record_id: state.lastResult.record_id || null
+  };
+
+  try {
+    const res = await fetch(`${API_BASE}/plan/generate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        assessment_result: assessmentResult,
+        lifestyle_inputs: lifestyleInputs
+      })
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || 'Failed to generate plan');
+
+    // Combine original health insights with the new recommendations
+    const healthInsights = state.lastResult.recommendations?.health_insights || [];
+    state.lastResult.recommendations = data;
+    state.lastResult.recommendations.health_insights = healthInsights;
+
+    state.planGenerated = true;
+    localStorage.setItem('hhPlanGenerated', 'true');
+    localStorage.setItem('hhLastResult', JSON.stringify(state.lastResult));
+
+    // Hide the form and show the tabs
+    document.querySelector('#myPlanPage .step-card-form').classList.add('hidden');
+    document.getElementById('recsSection').classList.remove('hidden');
+    renderPlanTabs();
+    
+    toast('✨ Your personalized plan is ready!');
+
+  } catch (e) {
+    toast(`❌ ${e.message}`);
+  } finally {
+    btn.classList.remove('hidden'); spin.classList.add('hidden');
   }
 }
 

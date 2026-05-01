@@ -31,6 +31,10 @@ def predict(request: Request, req: PredictRequest, background_tasks: BackgroundT
         background_tasks.add_task(log_prediction, req_id, user_input, prob, result.get('risk_level', 'Low'))
         result['request_id'] = req_id
         
+        from app.ml.recommendation_engine import get_rule_based_recommendations
+        base_plan = get_rule_based_recommendations(user_input, result.get('risk_percentage', 0), result.get('risk_level', 'Low'))
+        result['recommendations'] = {"health_insights": base_plan.get("health_insights", [])}
+        
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -82,9 +86,16 @@ def predict_full(request: Request, req: PredictRequest, background_tasks: Backgr
         result['request_id'] = req_id
 
         if req.save_record:
-            from app.ml.inference import get_gemini_recommendations
-            recs = get_gemini_recommendations(user_input, result['risk_percentage'], result['risk_level'])
-            result['recommendations'] = recs
+            from app.ml.recommendation_engine import get_rule_based_recommendations
+            
+            # Generate the base plan to extract just the insights for the immediate UI response
+            base_plan = get_rule_based_recommendations(user_input, result['risk_percentage'], result['risk_level'])
+            
+            # We return ONLY health_insights. The Diet/Exercise/Lifestyle will be populated after Step 2.
+            partial_recs = {
+                "health_insights": base_plan.get("health_insights", [])
+            }
+            result['recommendations'] = partial_recs
 
             record = HealthRecord(
                 profile_id=profile.profile_id,
@@ -92,12 +103,16 @@ def predict_full(request: Request, req: PredictRequest, background_tasks: Backgr
                 input_features=json.dumps(user_input),
                 risk_score=result['risk_percentage'],
                 risk_level=result['risk_level'],
-                recommendations=json.dumps(recs)
+                recommendations=None, # Will be populated by /recommend/personalized
+                lifestyle_features=None
             )
             db.add(record)
+            db.flush() # Flush to get the generated record_id
+            
+            result['record_id'] = record.record_id
 
             prev_record = (db.query(HealthRecord)
-                           .filter(HealthRecord.profile_id == profile.profile_id)
+                           .filter(HealthRecord.profile_id == profile.profile_id, HealthRecord.record_id != record.record_id)
                            .order_by(HealthRecord.prediction_date.desc())
                            .first())
 

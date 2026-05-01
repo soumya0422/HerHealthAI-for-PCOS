@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css?v=11" />
 </head>
 <body>
 
@@ -37,6 +37,7 @@
       <a href="#" onclick="showPage('landing')" class="nav-link active" id="navHome">Home</a>
       <a href="#" onclick="showPage('assess')" class="nav-link" id="navAssess">Assessment</a>
       <a href="#" onclick="showPage('progress')" class="nav-link" id="navProgress">My Progress</a>
+      <a href="#" onclick="showPage('myplan')" class="nav-link" id="navMyPlan">My Plan</a>
       <a href="#" onclick="showPage('diary')" class="nav-link" id="navDiary">My Diary</a>
     </div>
     <div class="nav-auth" id="navAuth">
@@ -177,8 +178,8 @@
         </div>
         <div class="stat-divider"></div>
         <div class="stat-item">
-          <span class="stat-num">AI</span>
-          <span class="stat-lbl">Gemini Powered</span>
+          <span class="stat-num">Clinical</span>
+          <span class="stat-lbl">Rule-Based Plan</span>
         </div>
       </div>
     </div>
@@ -204,7 +205,7 @@
           <div class="step-num">03</div>
           <div class="step-icon">🌿</div>
           <h3>Personalized Plan</h3>
-          <p>Google Gemini AI generates your custom diet plan, exercise schedule, and lifestyle tips.</p>
+          <p>Our Clinical Rule-Based Engine generates your custom diet plan, exercise schedule, and lifestyle tips.</p>
         </div>
         <div class="step-card">
           <div class="step-num">04</div>
@@ -585,26 +586,129 @@
     </div>
 
     <!-- Continuous Learning Feedback -->
-    <div class="feedback-section glass" id="feedbackSection" style="margin-top: 1.5rem; border: 1px solid rgba(168,85,247,0.3);">
+    <div class="feedback-section glass" id="feedbackSection">
+      <div class="feedback-accent"></div>
       <h3 class="section-subtitle">🧬 Help Improve HerHealthAI</h3>
-      <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1rem;">If you have a verified clinical diagnosis, please share it to help our AI continuously learn and improve its accuracy.</p>
-      <div id="feedbackFormArea">
-        <select id="clinicalDiagnosis" class="form-input" style="max-width: 250px; display: inline-block; margin-right: 0.5rem; margin-bottom: 0.5rem;">
+      <p class="feedback-desc">If you have a verified clinical diagnosis, please share it to help our AI continuously learn and improve its accuracy.</p>
+      <div id="feedbackFormArea" class="feedback-form-row">
+        <select id="clinicalDiagnosis" class="form-input feedback-select">
           <option value="">-- Verified Diagnosis --</option>
           <option value="Yes">Yes, Diagnosed with PCOS</option>
           <option value="No">No, Cleared of PCOS</option>
         </select>
         <button class="btn btn-primary btn-sm" onclick="submitClinicalFeedback()">Submit Feedback</button>
       </div>
-      <div id="feedbackSuccess" class="hidden" style="color: #4ade80; font-weight: 500; font-size: 0.9rem;">✅ Thank you! Your feedback has been safely logged to improve the AI.</div>
+      <div id="feedbackSuccess" class="feedback-success hidden">✅ Thank you! Your feedback has been safely logged to improve the AI.</div>
     </div>
 
-    <!-- Diet + Exercise + Lifestyle Tabs -->
-    <div class="recs-section glass">
+    <!-- Plan CTA on Results Page -->
+    <div class="personalize-cta glass">
+      <div class="cta-glow"></div>
+      <h3 class="section-subtitle">🌟 Unlock Your Custom Plan</h3>
+      <p class="cta-desc">Head over to the <strong>My Plan</strong> tab to generate your personalized Diet, Exercise, and Lifestyle recommendations.</p>
+      <button class="btn btn-primary btn-lg" onclick="showPage('myplan')">Go to My Plan →</button>
+    </div>
+  </section>
+
+  <!-- ─────────── MY PLAN PAGE ─────────── -->
+  <section class="page hidden" id="myPlanPage">
+    <div class="plan-header">
+      <button class="btn btn-outline btn-sm" onclick="showPage('results')">← Back to Results</button>
+      <h1 class="section-title">My Personalized <span class="gradient-text">Plan</span></h1>
+      <p class="assess-sub">Tell us a bit about your daily routine including sleep duration to generate your personalized Diet, Exercise, and Lifestyle recommendations.</p>
+    </div>
+
+    <div class="plan-form-container">
+      <div class="step-card-form glass">
+        <h2 class="step-title">🌿 Lifestyle Profile</h2>
+        <p class="step-desc">Help us understand your daily routine so we can tailor your plan.</p>
+        <div class="input-grid">
+          <div class="form-group">
+            <label class="form-label">Wake-up Time</label>
+            <input type="time" id="ls_wake_up" class="form-input" value="07:00" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Sleep Duration</label>
+            <select id="ls_sleep" class="form-input">
+              <option value="<5 hours"><5 hours</option>
+              <option value="5-6 hours">5-6 hours</option>
+              <option value="6-7 hours">6-7 hours</option>
+              <option value="7-8 hours" selected>7-8 hours</option>
+              <option value="8+ hours">8+ hours</option>
+            </select>
+          </div>
+          <div class="form-group span-full">
+            <label class="form-label">Activity Level</label>
+            <div class="radio-group">
+              <label class="radio-option"><input type="radio" name="ls_activity" value="Sedentary"> Sedentary</label>
+              <label class="radio-option"><input type="radio" name="ls_activity" value="Moderate" checked> Moderate</label>
+              <label class="radio-option"><input type="radio" name="ls_activity" value="Active"> Active</label>
+            </div>
+          </div>
+          <div class="form-group span-full">
+            <label class="form-label">Stress Level</label>
+            <div class="radio-group">
+              <label class="radio-option"><input type="radio" name="ls_stress" value="Low" checked> Low</label>
+              <label class="radio-option"><input type="radio" name="ls_stress" value="Medium"> Medium</label>
+              <label class="radio-option"><input type="radio" name="ls_stress" value="High"> High</label>
+            </div>
+          </div>
+          <div class="form-group span-full">
+            <label class="form-label">Exercise Frequency</label>
+            <div class="radio-group">
+              <label class="radio-option"><input type="radio" name="ls_exercise" value="None"> None</label>
+              <label class="radio-option"><input type="radio" name="ls_exercise" value="1-2 days" checked> 1-2 days</label>
+              <label class="radio-option"><input type="radio" name="ls_exercise" value="3-5 days"> 3-5 days</label>
+              <label class="radio-option"><input type="radio" name="ls_exercise" value="Daily"> Daily</label>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Food Preference</label>
+            <select id="ls_food" class="form-input">
+              <option value="Veg">Veg</option>
+              <option value="Non-Veg">Non-Veg</option>
+              <option value="Vegan">Vegan</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Water Intake</label>
+            <select id="ls_water" class="form-input">
+              <option value="Low">Low (< 4 glasses)</option>
+              <option value="Medium" selected>Medium (4-7 glasses)</option>
+              <option value="High">High (8+ glasses)</option>
+            </select>
+          </div>
+          <div class="form-group span-full">
+            <label class="form-label">Job / Daily Routine</label>
+            <div class="radio-group">
+              <label class="radio-option"><input type="radio" name="ls_job" value="Corporate / Desk Job" checked> Corporate / Desk Job</label>
+              <label class="radio-option"><input type="radio" name="ls_job" value="Active / Field Work"> Active / Field</label>
+              <label class="radio-option"><input type="radio" name="ls_job" value="Sports Woman / Athlete"> Sports Woman</label>
+              <label class="radio-option"><input type="radio" name="ls_job" value="Student"> Student</label>
+              <label class="radio-option"><input type="radio" name="ls_job" value="Homemaker"> Homemaker</label>
+            </div>
+          </div>
+        </div>
+        <div class="step-actions plan-actions">
+          <div></div>
+          <button class="btn btn-primary btn-lg" onclick="generateMyPlan()">
+            <span id="genPlanBtnText">Generate My Plan ✨</span>
+            <div class="btn-spinner hidden" id="genPlanSpinner"></div>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Generated Plan Tabs -->
+    <div class="recs-section glass hidden" id="recsSection">
+      <div class="recs-top-bar">
+        <button class="btn btn-outline btn-sm" onclick="resetAndShowForm()">🔄 Regenerate Plan</button>
+      </div>
       <div class="recs-tabs">
         <button class="tab-btn active" id="tabDiet"      onclick="switchRecTab('diet')">🥗 Diet Plan</button>
         <button class="tab-btn"        id="tabExercise"  onclick="switchRecTab('exercise')">🏋️ Exercise</button>
         <button class="tab-btn"        id="tabLifestyle" onclick="switchRecTab('lifestyle')">🌙 Lifestyle</button>
+        <button class="tab-btn"        id="tabSleep"     onclick="switchRecTab('sleep')">💤 Sleep</button>
       </div>
 
       <!-- Diet Tab -->
@@ -638,6 +742,13 @@
           <div class="skeleton-line"></div><div class="skeleton-line short"></div>
         </div>
         <div class="doctor-box" id="doctorBox"></div>
+      </div>
+
+      <!-- Sleep Tab -->
+      <div class="tab-content hidden" id="tabContentSleep">
+        <div class="lifestyle-list" id="sleepList">
+          <div class="skeleton-line"></div><div class="skeleton-line short"></div>
+        </div>
       </div>
     </div>
 
@@ -825,6 +936,6 @@
 <!-- ═══════════════════════ TOAST ═══════════════════════ -->
 <div class="toast hidden" id="toast"></div>
 
-<script src="app_v3.js"></script>
+<script src="app_v3.js?v=11"></script>
 </body>
 </html>

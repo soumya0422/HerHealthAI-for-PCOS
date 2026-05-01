@@ -185,12 +185,17 @@ The proposed system was implemented as a full-stack web application. Figure 5.9 
 # Chapter 6: Conclusion and Future Scope
 
 ## 6.1 Conclusion
-The investigation successfully developed a comprehensive AI-driven platform, **HerHealthAI**, for PCOS risk assessment and management. By utilizing a Random Forest ensemble model combined with a native Tree Interpreter, the system achieved a high diagnostic accuracy (99.63%) while maintaining total transparency. The integration of a deterministic rule-based expert engine allowed for the precise translation of complex clinical findings into actionable lifestyle protocols, effectively bridging the gap between diagnosis and patient care.
+The investigation successfully conceptualized, developed, and deployed a comprehensive AI-driven platform, **HerHealthAI**, for the proactive risk assessment and lifestyle management of Polycystic Ovary Syndrome (PCOS). This study addressed the critical shortcomings of existing static and "black-box" diagnostic systems by introducing the Self-Optimizing Random Forest with an Exact Tree Interpreter (SORF-ETI). The proposed system achieved a high predictive accuracy of 99.63% while maintaining total mathematical transparency, allowing both patients and clinicians to understand the exact physiological factors driving each risk score.
 
-Furthermore, the implementation of an automated continuous learning pipeline ensures that the system remains relevant and improves as more clinical feedback is ingested, solving the problem of static model degradation seen in previous schemes.
+Furthermore, this research bridged the gap between algorithmic diagnosis and patient care by implementing a multi-tiered, deterministic rule-based expert engine. This engine successfully translates complex clinical findings (e.g., hyperandrogenism, insulin resistance) and patient lifestyle constraints into safe, actionable, and personalized health protocols without the risk of generative AI hallucinations. 
+
+Finally, the implementation of an automated continuous learning pipeline ensures that the system is resilient to data drift. By autonomously logging clinical feedback, scheduling retraining cycles, and securely promoting candidate models only when they mathematically outperform the active baseline, HerHealthAI effectively solves the problem of static model degradation seen in previous academic schemes.
 
 ## 6.2 Future Scope
-The study provides significant scope for future expansion:
-*   **Multimodal Diagnostic Integration**: Future versions could incorporate Convolutional Neural Networks (CNNs) to directly analyze pelvic ultrasound images, combining computer vision with tabular clinical data for a more robust diagnosis.
-*   **Federated Learning Deployment**: To enhance privacy while training on larger datasets, a federated learning architecture could be explored, allowing the model to learn from multiple hospital databases without centralizing sensitive patient data.
-*   **Wearable Data Synchronization**: Integrating real-time data from wearable health trackers (e.g., basal body temperature, sleep patterns) could provide more granular insights into hormonal cycles and metabolic health.
+The foundational architecture of HerHealthAI provides significant scope for advanced future expansion:
+
+*   **Multimodal Diagnostic Integration**: Future iterations could incorporate Convolutional Neural Networks (CNNs) to directly analyze transvaginal pelvic ultrasound images. Fusing this computer vision data with the existing tabular clinical data would result in a highly robust, multimodal diagnostic tool.
+*   **Federated Learning Deployment**: To train on vast, globally distributed clinical datasets while strictly preserving patient privacy, a federated learning architecture could be implemented. This would allow the model to learn across multiple hospital networks without centralizing sensitive medical records.
+*   **Longitudinal Time-Series Forecasting**: Incorporating sequential models (such as LSTMs or Transformers) to track patient progress over months or years, effectively predicting long-term symptom trajectories based on adherence to the recommended diet and lifestyle protocols.
+*   **Wearable IoT Data Synchronization**: Integrating real-time data from Internet of Things (IoT) health trackers (e.g., continuous glucose monitors, sleep trackers, basal body temperature sensors) to provide highly granular, day-by-day insights into hormonal cycles and metabolic health.
+*   **Electronic Health Record (EHR) Integration**: Developing compliance-standard APIs (e.g., HL7 FHIR) to allow the platform to ingest patient history directly from hospital EHR systems, reducing manual data-entry errors and streamlining clinical workflows.
